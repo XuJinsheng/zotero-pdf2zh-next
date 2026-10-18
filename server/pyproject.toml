@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zotero-pdf2zh-next"
-version = "5.4.0"
+version = "5.5.0"
 description = "Minimal pdf2zh_next bridge for the Zotero plugin"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -12,7 +12,7 @@ license = "AGPL-3.0-or-later"
 license-files = ["LICENSES/*.txt", "THIRD_PARTY_NOTICES.md"]
 dependencies = [
     "azure-ai-translation-text<=1.0.1",
-    "bitstring>=4.3.0",
+    "bitstring>=4.3.0,<5",
     "chardet>=5.2.0",
     "charset-normalizer>=2.0.0",
     "configargparse>=1.7",

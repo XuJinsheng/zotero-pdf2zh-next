@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1.7
 FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim
 
 ENV UV_COMPILE_BYTECODE=1 \
@@ -13,11 +12,11 @@ RUN apt-get update \
         libxcb1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY server/pyproject.toml server/uv.lock ./
+COPY server/pyproject.toml ./
 ARG UV_INDEX_URL
 ENV UV_INDEX_URL=${UV_INDEX_URL}
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev --no-install-project
+    uv sync --no-dev --no-install-project
 
 COPY server/LICENSES ./LICENSES
 COPY server/babeldoc ./babeldoc
@@ -26,7 +25,7 @@ COPY server/rapidocr_onnxruntime ./rapidocr_onnxruntime
 COPY server/THIRD_PARTY_NOTICES.md ./
 COPY server/server.py server/task_manager.py server/pdf2zh_next_service.py ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --no-dev
 
 EXPOSE 8890
 

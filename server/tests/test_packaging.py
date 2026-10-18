@@ -35,38 +35,6 @@ class PackagingTests(unittest.TestCase):
             }.isdisjoint(dependency_names)
         )
 
-    def test_lock_uses_public_pypi_only(self) -> None:
-        lock = tomllib.loads((SERVER_DIR / "uv.lock").read_text())
-        registries = {
-            package["source"]["registry"]
-            for package in lock["package"]
-            if "registry" in package["source"]
-        }
-
-        self.assertEqual(registries, {"https://pypi.org/simple"})
-
-    def test_lock_omits_unused_pdf2zh_frontends(self) -> None:
-        lock = tomllib.loads((SERVER_DIR / "uv.lock").read_text())
-        package_names = {package["name"] for package in lock["package"]}
-
-        self.assertTrue(
-            {
-                "fastapi",
-                "gradio",
-                "gradio-i18n",
-                "gradio-pdf",
-                "legacy-cgi",
-                "opencv-python",
-                "pandas",
-                "pdf2zh-next",
-                "pydantic-settings",
-                "rapidocr-onnxruntime",
-                "ruff",
-                "sse-starlette",
-                "uvicorn",
-            }.isdisjoint(package_names)
-        )
-
     def test_vendored_runtime_versions_are_fixed(self) -> None:
         import babeldoc
         import pdf2zh_next
