@@ -18,11 +18,12 @@ from server import parse_retry_options, prepare_translation_request, validate_co
 
 
 class RequestRetryTests(unittest.TestCase):
-    def make_translator(self, statuses):
+    def make_translator(self, statuses, service="openai"):
         settings = create_runtime_settings({
             "input_path": "/tmp/paper.pdf", "output_dir": "/tmp/output",
             "output_modes": ["dual"], "source_lang": "en", "target_lang": "zh-CN",
-            "service": "openai", "llm_api": {"apiKey": "test", "model": "test"},
+            "service": service, "llm_api": {"apiKey": "test", "model": "test",
+                                             "apiUrl": "https://example.com/v1"},
         })
         translator = OpenAITranslator(settings, None)
         translator.client.close()
@@ -32,8 +33,14 @@ class RequestRetryTests(unittest.TestCase):
             status = statuses[min(len(self.calls) - 1, len(statuses) - 1)]
             if status == "timeout":
                 raise httpx.ReadTimeout("test timeout", request=request)
-            body = ({"choices": [{"message": {"role": "assistant", "content": "译文"}}]}
-                    if status == 200 else {"error": {"message": "test error"}})
+            if status != 200:
+                body = {"error": {"message": "test error"}}
+            elif service == "openai":
+                body = {"status": "completed", "output": [{
+                    "type": "message", "role": "assistant", "content": [
+                        {"type": "output_text", "text": "译文", "annotations": []}]}]}
+            else:
+                body = {"choices": [{"message": {"role": "assistant", "content": "译文"}}]}
             return httpx.Response(status, json=body)
         translator.client = openai.OpenAI(
             api_key="test", http_client=httpx.Client(transport=httpx.MockTransport(handle))
@@ -51,14 +58,16 @@ class RequestRetryTests(unittest.TestCase):
                 self.assertEqual(len(self.calls), 3)
 
     def test_success_after_retry_for_both_entrypoints(self):
-        for method in ("do_translate", "do_llm_translate"):
-            translator = self.make_translator([500, 200])
-            configure_request_retries(translator, {"retry_count": 2, "retry_interval": 7})
-            sleep_calls = []
-            getattr(translator, method).retry.sleep = sleep_calls.append
-            self.assertEqual(getattr(translator, method)("text"), "译文")
-            self.assertEqual(len(self.calls), 2)
-            self.assertEqual(sleep_calls, [7])
+        for service in ("openai", "openaicompatible"):
+            for method in ("do_translate", "do_llm_translate"):
+                with self.subTest(service=service, method=method):
+                    translator = self.make_translator([500, 200], service)
+                    configure_request_retries(translator, {"retry_count": 2, "retry_interval": 7})
+                    sleep_calls = []
+                    getattr(translator, method).retry.sleep = sleep_calls.append
+                    self.assertEqual(getattr(translator, method)("text"), "译文")
+                    self.assertEqual(len(self.calls), 2)
+                    self.assertEqual(sleep_calls, [7])
 
     def test_zero_disables_both_layers(self):
         translator = self.make_translator([429])

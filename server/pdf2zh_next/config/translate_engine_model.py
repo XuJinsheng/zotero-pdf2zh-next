@@ -78,6 +78,9 @@ class OpenAISettings(BaseModel):
         default="yes", description="Whether the translator supports LLM"
     )
 
+    # Internal routing metadata retained when compatible services are normalized.
+    openai_api_protocol: Literal["responses", "chat_completions"] = "responses"
+
     openai_model: str = Field(default="gpt-4o-mini", description="OpenAI model to use")
     openai_base_url: str | None = Field(
         default=None, description="Base URL for OpenAI API"
@@ -87,6 +90,9 @@ class OpenAISettings(BaseModel):
     )
     openai_timeout: str | None = Field(
         default=None, description="Timeout (seconds) for OpenAI service"
+    )
+    openai_stream: bool = Field(
+        default=False, description="Enable streaming for OpenAI service"
     )
     openai_temperature: str | None = Field(
         default=None, description="Temperature for OpenAI service"
@@ -113,6 +119,8 @@ class OpenAISettings(BaseModel):
             raise ValueError("OpenAI API key is required")
         self.openai_api_key = _clean_string(self.openai_api_key)
         self.openai_base_url = _clean_url(self.openai_base_url)
+        if self.openai_api_protocol == "responses" and self.openai_base_url:
+            self.openai_base_url = re.sub(r"/responses$", "", self.openai_base_url)
         self.openai_model = _clean_string(self.openai_model)
         self.openai_timeout = _check_if_positive_float(
             _clean_string(self.openai_timeout),
@@ -201,6 +209,7 @@ class DeepSeekSettings(BaseModel):
 
     def transform(self) -> OpenAISettings:
         return OpenAISettings(
+            openai_api_protocol="chat_completions",
             openai_model=self.deepseek_model,
             openai_api_key=self.deepseek_api_key,
             openai_base_url="https://api.deepseek.com/v1",
@@ -320,6 +329,7 @@ class ModelScopeSettings(BaseModel):
 
     def transform(self) -> OpenAISettings:
         return OpenAISettings(
+            openai_api_protocol="chat_completions",
             openai_model=self.modelscope_model,
             openai_api_key=self.modelscope_api_key,
             openai_base_url="https://api-inference.modelscope.cn/v1",
@@ -354,6 +364,7 @@ class ZhipuSettings(BaseModel):
 
     def transform(self) -> OpenAISettings:
         return OpenAISettings(
+            openai_api_protocol="chat_completions",
             openai_model=self.zhipu_model,
             openai_api_key=self.zhipu_api_key,
             openai_base_url="https://open.bigmodel.cn/api/paas/v4",
@@ -473,6 +484,7 @@ class GeminiSettings(BaseModel):
 
     def transform(self) -> OpenAISettings:
         return OpenAISettings(
+            openai_api_protocol="chat_completions",
             openai_model=self.gemini_model,
             openai_api_key=self.gemini_api_key,
             openai_base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
@@ -565,6 +577,7 @@ class GrokSettings(BaseModel):
 
     def transform(self) -> OpenAISettings:
         return OpenAISettings(
+            openai_api_protocol="chat_completions",
             openai_model=self.grok_model,
             openai_api_key=self.grok_api_key,
             openai_base_url="https://api.x.ai/v1",
@@ -601,6 +614,7 @@ class GroqSettings(BaseModel):
 
     def transform(self) -> OpenAISettings:
         return OpenAISettings(
+            openai_api_protocol="chat_completions",
             openai_model=self.groq_model,
             openai_api_key=self.groq_api_key,
             openai_base_url="https://api.groq.com/openai/v1",
@@ -670,6 +684,9 @@ class OpenAICompatibleSettings(BaseModel):
     openai_compatible_timeout: str | None = Field(
         default=None, description="Timeout (seconds) for OpenAI Compatible service"
     )
+    openai_compatible_stream: bool = Field(
+        default=False, description="Enable streaming for OpenAI Compatible service"
+    )
     openai_compatible_temperature: str | None = Field(
         default=None, description="Temperature for OpenAI Compatible service"
     )
@@ -725,10 +742,12 @@ class OpenAICompatibleSettings(BaseModel):
 
     def transform(self) -> OpenAISettings:
         return OpenAISettings(
+            openai_api_protocol="chat_completions",
             openai_model=self.openai_compatible_model,
             openai_api_key=self.openai_compatible_api_key,
             openai_base_url=self.openai_compatible_base_url,
             openai_timeout=self.openai_compatible_timeout,
+            openai_stream=self.openai_compatible_stream,
             openai_temperature=self.openai_compatible_temperature,
             openai_reasoning_effort=self.openai_compatible_reasoning_effort,
             openai_send_temprature=self.openai_compatible_send_temperature,
@@ -800,6 +819,7 @@ class AliyunDashScopeSettings(BaseModel):
 
     def transform(self) -> OpenAISettings:
         return OpenAISettings(
+            openai_api_protocol="chat_completions",
             openai_model=self.aliyun_dashscope_model,
             openai_api_key=self.aliyun_dashscope_api_key,
             openai_base_url=self.aliyun_dashscope_base_url,
