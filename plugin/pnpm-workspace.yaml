@@ -1,0 +1,10 @@
+# Manage Zotero reader types as direct, commit-pinned development dependencies.
+# Keep pnpm's default blockExoticSubdeps policy enabled.
+overrides:
+    zotero-types>epubjs: "-"
+    zotero-types>pdfjs-dist: "-"
+
+allowBuilds:
+    "@swc/core": true
+    esbuild: true
+    es5-ext: false

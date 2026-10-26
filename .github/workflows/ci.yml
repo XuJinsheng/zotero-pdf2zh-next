@@ -32,18 +32,21 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v7
               with:
-                  node-version: 20
+                  node-version: 24
 
             - name: Setup pnpm
               uses: pnpm/action-setup@v6
               with:
-                  version: 10.34.5
+                  package_json_file: plugin/package.json
 
             - name: Install plugin deps
               run: pnpm install --frozen-lockfile
 
             - name: Lint plugin
               run: pnpm lint:check
+
+            - name: Test plugin
+              run: pnpm test
 
             - name: Build plugin
               run: pnpm build

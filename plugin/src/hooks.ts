@@ -20,7 +20,7 @@ async function onStartup() {
 
 async function onMainWindowLoad(_win: Window): Promise<void> {
     addon.data.ztoolkit = createZToolkit();
-    PDF2zhUIFactory.registerRightClickMenuItem();
+    PDF2zhUIFactory.registerRightClickMenuItem(_win);
     await new Promise((resolve) => setTimeout(resolve, 200));
     initTableUI();
 }

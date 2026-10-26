@@ -120,10 +120,10 @@ done
 for cmd in git gh node npx uv perl curl; do
     require_command "$cmd"
 done
-PNPM=(npx --yes pnpm@10.34.5)
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
+PNPM=(npx --yes "$(node -p 'require("./plugin/package.json").packageManager')")
 
 if [[ -z "$TAP_PATH" ]]; then
     if [[ -d "$REPO_ROOT/../homebrew-formula/.git" ]]; then

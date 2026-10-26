@@ -114,7 +114,7 @@ class PDF2zhNextServiceTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual(settings.translation.output, "/tmp/output")
+        self.assertEqual(Path(settings.translation.output), Path("/tmp/output"))
         self.assertEqual(settings.translation.lang_in, "en")
         self.assertEqual(settings.translation.lang_out, "zh-CN")
         self.assertEqual(settings.translation.qps, 8)

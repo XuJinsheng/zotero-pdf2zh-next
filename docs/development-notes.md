@@ -120,6 +120,14 @@ pnpm --dir plugin exec eslint src/modules/preferenceScript.ts
 
 插件构建产物可在 `Artifacts` 中下载，保留 30 天。仅 `main` 分支发布开发镜像（`main`、`sha-<完整提交 SHA>`）；其他分支和 PR 只验证构建。正式版标签和 `latest` 由发布流程维护。
 
+### 依赖维护（2026-10-26）
+
+- pnpm `12.15.0`、Node 24；CI 和发布脚本统一读取 `packageManager`。
+- Zotero 的 EPUB/PDF 类型包作为直接开发依赖固定提交；定向移除重复 Git 子依赖，保留 pnpm 默认安全检查和发布冷却期。仅允许 SWC、esbuild 安装脚本。配置见 `plugin/pnpm-workspace.yaml`。
+- toolkit 6 删除菜单接口，改用 `UITool.createElement`；TypeScript 保持 6.0，因 [typescript-eslint 要求 `<6.1`](https://typescript-eslint.io/users/dependency-versions/)。
+- 清理无用直接依赖，补齐 `azure-core`、`regex`，提升服务端最低依赖版本。PyMuPDF 升至 2.0，附带 Layout/4LLM，安装体积增加。
+- Azure SDK 保持 `<2`：[2.0 改用新版 HTTP 协议](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/translation/azure-ai-translation-text/CHANGELOG.md)，现有中国区 v3 端点尚未验证新版协议。内置运行时快照及 Python 3.12/3.13 范围保持不变。
+
 ## 发布与 changelog
 
 开发期间在 `CHANGELOG.md` 标记“未发布”，发版前填写实际发布日期。发布脚本会检查是否存在对应版本章节：

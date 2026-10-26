@@ -449,13 +449,13 @@ class ServerRouteTests(unittest.TestCase):
             ):
                 response = self.client.get("/tasks/task-1/result?mode=dual")
 
-        try:
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.headers["X-PDF2ZH-Task-Id"], "task-1")
-            self.assertEqual(response.headers["X-PDF2ZH-Output-Mode"], "dual")
-            self.assertEqual(response.data, b"%PDF-1.4\n")
-        finally:
-            response.close()
+            try:
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.headers["X-PDF2ZH-Task-Id"], "task-1")
+                self.assertEqual(response.headers["X-PDF2ZH-Output-Mode"], "dual")
+                self.assertEqual(response.data, b"%PDF-1.4\n")
+            finally:
+                response.close()
 
     def test_task_result_rejects_invalid_output_mode(self) -> None:
         response = self.client.get("/tasks/task-1/result?mode=compare")

@@ -16,6 +16,9 @@ export default defineConfig({
 
     build: {
         assets: ["addon/**/*.*"],
+        fluent: {
+            dts: false,
+        },
         define: {
             ...pkg.config,
             author: pkg.author,

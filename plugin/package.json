@@ -1,7 +1,7 @@
 {
     "name": "zotero-pdf2zh-next",
     "version": "5.5.0",
-    "packageManager": "pnpm@10.34.5",
+    "packageManager": "pnpm@12.15.0",
     "description": "Minimal Zotero bridge for pdf2zh_next",
     "config": {
         "addonName": "zotero-pdf2zh-next",
@@ -29,21 +29,20 @@
         "update-deps": "pnpm up --latest"
     },
     "dependencies": {
-        "zotero-plugin-toolkit": "5.1.0-beta.10"
+        "axios": "^1.20.0",
+        "zotero-plugin-toolkit": "6.0.0"
     },
     "devDependencies": {
-        "@eslint/js": "^9.22.0",
-        "@types/node": "^22.13.10",
-        "axios": "^1.8.2",
-        "eslint": "^9.22.0",
-        "form-data": "^4.0.2",
-        "path": "^0.12.7",
-        "prettier": "^3.5.3",
-        "typescript": "^5.8.2",
-        "typescript-eslint": "^8.26.0",
-        "zotero-plugin-scaffold": "^0.3.2",
-        "zotero-types": "^4.1.0-beta.4",
-        "@napi-rs/canvas": "^0.1.80"
+        "@eslint/js": "^10.0.1",
+        "@types/node": "^24.19.2",
+        "epubjs": "github:zotero/epub.js#a6139d586b66d404f3da2b846598960c0394afc5",
+        "eslint": "^10.13.0",
+        "pdfjs-dist": "github:zotero-plugin-dev/zotero-pdfjs-types#c0cf0d7462e50ea65919835f89983e1704611993",
+        "prettier": "^3.9.10",
+        "typescript": "~6.0.3",
+        "typescript-eslint": "^8.72.0",
+        "zotero-plugin-scaffold": "^0.9.3",
+        "zotero-types": "^4.1.3"
     },
     "prettier": {
         "printWidth": 80,
