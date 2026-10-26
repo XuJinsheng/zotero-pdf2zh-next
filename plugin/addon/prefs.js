@@ -29,3 +29,7 @@ pref("__prefsPrefix__.disableTermExtraction", false);
 
 pref("__prefsPrefix__.dialog-service", "openai");
 pref("__prefsPrefix__.dialog-serviceSelect", "openai");
+
+pref("__prefsPrefix__.selectedLLMApiKey", "");
+pref("__prefsPrefix__.llmSelectionMigrated", false);
+pref("__prefsPrefix__.translationTitleSuffix", "name");

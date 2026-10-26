@@ -12,7 +12,8 @@ const source = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]
     .map((match) => match[1])
     .join("\n");
 
-function editor(data = {}) {
+function editor(data = {}, existingNames = []) {
+    data = { name: "Test profile", ...data };
     const elements = new Map();
     const rows = [];
     const document = {
@@ -28,14 +29,22 @@ function editor(data = {}) {
                             elements.get(id).hidden = hidden;
                         },
                     },
-                    reportValidity: () => true,
+                    setCustomValidity(message) {
+                        this.validationMessage = message;
+                    },
+                    reportValidity() {
+                        return !this.validationMessage;
+                    },
                     getElementsByClassName: () => rows,
                 });
             }
             return elements.get(id);
         },
     };
-    const window = { arguments: [{ data }], close() {} };
+    const window = {
+        arguments: [{ data, existingNames, getString: (key) => key }],
+        close() {},
+    };
     const context = vm.createContext({ document, window });
     vm.runInContext(source, context);
     // Keep the real form load/save and service binding, stub unrelated history UI.
@@ -60,7 +69,9 @@ function editor(data = {}) {
         rows,
         save() {
             context.saveLLMApi();
-            return JSON.parse(JSON.stringify(window.arguments[0].result.data));
+            return window.arguments[0].result
+                ? JSON.parse(JSON.stringify(window.arguments[0].result.data))
+                : undefined;
         },
     };
 }
@@ -109,4 +120,13 @@ test("checkbox overrides duplicate extra parameters including normalized keys", 
     form.context.addRow("openai_stream", "true");
     form.context.addRow(" openai-stream ", "true");
     assert.deepEqual(form.save().extraData, { openai_stream: false });
+});
+
+test("service names are trimmed, required, unique, and editable after validation failure", () => {
+    const form = editor({ service: "openai", name: "   " }, ["Taken"]);
+    assert.equal(form.save(), undefined);
+    form.element("name").value = " Taken ";
+    assert.equal(form.save(), undefined);
+    form.element("name").value = " My model ";
+    assert.equal(form.save().name, "My model");
 });

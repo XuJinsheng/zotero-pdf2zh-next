@@ -1,3 +1,4 @@
+import { getString } from "../utils/locale";
 import { config } from "../../package.json";
 import { getPref } from "../utils/prefs";
 import {
@@ -71,6 +72,12 @@ export class PDF2zhTaskManager {
         const errors: string[] = [];
         const total = selectedItems.length;
         const serverConfig = PDF2zhHelperFactory.getServerConfig();
+
+        if (!serverConfig.llmApi) {
+            progressWindow.close();
+            ztoolkit.getGlobal("alert")(getString("llm-select-config"));
+            return;
+        }
 
         if (serverConfig.outputModes.length === 0) {
             ztoolkit.getGlobal("alert")("请至少选择一种输出PDF模式。");
@@ -313,6 +320,7 @@ export class PDF2zhTaskManager {
         );
         this.upsertTask(task, config.serverUrl, {
             itemID: item.id,
+            titleSnapshot: config.titleSnapshot,
             source: "local",
             importState: "pending",
         });
@@ -345,6 +353,7 @@ export class PDF2zhTaskManager {
                 const existing = this.tasks.get(snapshot.taskId);
                 this.upsertTask(snapshot, serverUrl, {
                     itemID: existing?.itemID,
+                    titleSnapshot: existing?.titleSnapshot,
                     source: existing?.source || "remote",
                     importState: existing?.importState || "none",
                     importError: existing?.importError,
@@ -406,6 +415,7 @@ export class PDF2zhTaskManager {
             source: existing?.source || "remote",
             importState: existing?.importState || "none",
             itemID: existing?.itemID,
+            titleSnapshot: existing?.titleSnapshot,
             importError: existing?.importError,
             ...overrides,
         };
@@ -464,6 +474,7 @@ export class PDF2zhTaskManager {
             const existing = this.tasks.get(event.task.taskId);
             this.upsertTask(event.task, serverUrl, {
                 itemID: existing?.itemID,
+                titleSnapshot: existing?.titleSnapshot,
                 source: existing?.source || "remote",
                 importState: existing?.importState || "none",
                 importError: existing?.importError,

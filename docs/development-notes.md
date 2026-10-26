@@ -25,11 +25,11 @@ uv run --directory server zotero-pdf2zh-next
 面向用户的服务端分发优先使用 `uv tool`，命令名和插件名保持一致：
 
 ```bash
-uv tool install --python 3.13 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@v5.5.0#subdirectory=server"
+uv tool install --python 3.13 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@v5.6.0#subdirectory=server"
 zotero-pdf2zh-next
 ```
 
-本分支服务端通过 Git 源码安装；现有 PyPI 包属于上游分发。当前本分支发布使用 `scripts/release.sh 5.5.0 --no-pypi --no-tap`。取得发布权限后，可通过统一发版脚本和 GitHub Trusted Publisher 发布，也可以由 direnv 注入 token；token 不写进仓库。
+本分支服务端通过 Git 源码安装；现有 PyPI 包属于上游分发。当前本分支发布使用 `scripts/release.sh 5.6.0 --no-pypi --no-tap`。取得发布权限后，可通过统一发版脚本和 GitHub Trusted Publisher 发布，也可以由 direnv 注入 token；token 不写进仓库。
 
 服务端入口在 `server/server.py`，真正把插件参数转换为 `pdf2zh_next` 参数的是 `server/pdf2zh_next_service.py`。
 
@@ -72,7 +72,16 @@ uv run python scripts/vendor_pdf2zh_runtime.py
 - 偏好页可能被多次加载，动态插入选项前要清理旧内容。例如语言下拉初始化前要 `replaceChildren()`，否则会重复堆叠。
 - Zotero 的 XHTML 会被 Prettier 用比较奇怪的方式格式化，尤其是内联 CSS。优先保证构建和 lint 通过，不要在这个文件里追求普通网页项目的格式体验。
 - 偏好页状态可以从 `plugin/package.json` 读取插件版本；服务端版本来自 `/health`。
-- 连接检查按钮要防重复点击。失败时也要把页面上的服务端状态更新为不可连接，而不只是弹窗。
+- 连接检查按钮要防重复点击。连接失败时同步更新页面状态；服务端已连通但尚未选择配置时，保留连通状态并提示选择配置。
+
+### LLM 配置与本地化
+
+- `llmApiManager.ts` 负责配置存储、旧数据迁移和按 `selectedLLMApiKey` 读取当前配置，是配置数据的唯一来源。`service` 字段继续表示提供商类型，与服务端协议兼容；`name` 是用户自定义名称。
+- 偏好页只保留表格行索引缓存，不再维护第二份配置 Map。配置增删改后保存偏好，并刷新行索引和主选项下拉；表格行选择与当前翻译配置选择相互独立。
+- `llmSelectionMigrated` 只用于首次恢复原提供商下的激活项。迁移后不再读取激活状态，不能因为当前选择为空而重复迁移，否则删除配置后可能意外切换到另一条。
+- 批量提交固定配置和标题后缀快照；任务刷新时保留本地标题快照。结果导入只依赖任务的提供商和标题快照，不应重新读取当前 LLM 配置。插件当前仅在内存中维护本地任务关联，缺少快照时回退到任务提供商。
+- LLM 编辑器、表格和动态提示使用 `addon.ftl`，偏好页静态标签使用 `preferences.ftl`。编辑器通过窗口参数接收现有 `getString`，不另建语言选择逻辑；新增文案要同时补齐中英文资源。
+- LLM 配置行独占整行，语言选项在下一行。混用 HTML 与 XUL 时，需对配置标签和下拉框明确指定网格位置，避免 Zotero 原生样式导致右侧偏移。
 
 ## 任务与文件
 
@@ -133,7 +142,7 @@ pnpm --dir plugin exec eslint src/modules/preferenceScript.ts
 然后运行：
 
 ```bash
-scripts/release.sh 5.5.0 --no-pypi --no-tap
+scripts/release.sh 5.6.0 --no-pypi --no-tap
 ```
 
 按上述命令发布本分支时，脚本会做这些事：
@@ -184,7 +193,7 @@ CI 从指定 tag 构建 `linux/amd64` 镜像，先核对插件、服务端和 ta
 手动补发：
 
 ```bash
-gh workflow run publish-docker.yml --repo XuJinsheng/zotero-pdf2zh-next --ref main -f tag=v5.5.0
+gh workflow run publish-docker.yml --repo XuJinsheng/zotero-pdf2zh-next --ref main -f tag=v5.6.0
 ```
 
 ### 上游 Homebrew bottle 发布与瘦身记录
@@ -218,7 +227,6 @@ README 保持给使用者看的内容：
 - 在 Zotero 里怎么用。
 
 服务接口、请求体、内部任务结构、发布脚本细节都放到 `docs/` 或源码附近，不放 README。
-
 
 ## 上游 v5.4.0 发布验收（2026-09-19）
 

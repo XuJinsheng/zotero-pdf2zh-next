@@ -169,7 +169,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
     </style>
 
     <head>
-        <title>LLM API 配置编辑器</title>
+        <title data-editor-text="llm-editor-title"></title>
         <meta charset="utf-8" />
         <script>
             // <![CDATA[
@@ -179,16 +179,33 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
     <body>
         <div class="form-container">
-            <h2 id="dialog-title">LLM API 配置</h2>
+            <h2 id="dialog-title"></h2>
 
             <div class="form-group">
-                <label>LLM服务名称<span class="required">*</span></label>
+                <label for="name"
+                    ><span data-editor-text="llm-editor-name"></span
+                    ><span class="required">*</span></label
+                >
+                <div class="input-group">
+                    <input
+                        id="name"
+                        class="input-group-left"
+                        type="text"
+                        required="required"
+                    />
+                </div>
+            </div>
+            <div class="form-group">
+                <label
+                    ><span data-editor-text="llm-editor-provider"></span
+                    ><span class="required">*</span></label
+                >
                 <div class="input-group">
                     <input
                         id="service"
                         class="input-group-left"
                         type="text"
-                        placeholder="选择或输入服务 (如: deepseek)"
+                        data-editor-placeholder="llm-editor-provider-placeholder"
                     />
                     <select
                         id="serviceselect"
@@ -198,7 +215,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         type="button"
                         id="btn-del-service"
                         class="input-group-delete"
-                        title="删除自定义服务"
+                        data-editor-title="llm-editor-delete-provider"
                     >
                         ×
                     </button>
@@ -206,13 +223,13 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             </div>
 
             <div class="form-group">
-                <label>模型名称</label>
+                <label data-editor-text="llm-editor-model"></label>
                 <div class="input-group">
                     <input
                         id="model"
                         type="text"
                         class="input-group-left"
-                        placeholder="选择或输入模型 (如: deepseek-chat)"
+                        data-editor-placeholder="llm-editor-model-placeholder"
                     />
                     <select
                         id="modelselect"
@@ -222,7 +239,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         type="button"
                         id="btn-del-model"
                         class="input-group-delete"
-                        title="删除自定义模型"
+                        data-editor-title="llm-editor-delete-model"
                     >
                         ×
                     </button>
@@ -230,7 +247,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             </div>
 
             <div class="form-group">
-                <label>LLM API KEY</label>
+                <label data-editor-text="llm-editor-key"></label>
                 <div class="input-group">
                     <input
                         id="apiKey"
@@ -247,7 +264,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         type="button"
                         id="btn-del-apiKey"
                         class="input-group-delete"
-                        title="删除API Key记录"
+                        data-editor-title="llm-editor-delete-key"
                     >
                         ×
                     </button>
@@ -255,7 +272,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             </div>
 
             <div class="form-group">
-                <label>LLM BASE URL</label>
+                <label data-editor-text="llm-editor-url"></label>
                 <div class="input-group">
                     <input
                         id="apiUrl"
@@ -272,7 +289,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         type="button"
                         id="btn-del-url"
                         class="input-group-delete"
-                        title="删除自定义URL"
+                        data-editor-title="llm-editor-delete-url"
                     >
                         ×
                     </button>
@@ -280,88 +297,75 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             </div>
 
             <div class="form-group">
+                <label data-editor-text="llm-editor-runtime"></label>
+                <p data-editor-text="llm-editor-runtime-help"></p>
                 <label
-                    style="
-                        display: inline-flex;
-                        align-items: center;
-                        cursor: pointer;
-                    "
-                >
-                    <input
-                        type="checkbox"
-                        id="activate"
-                        style="margin-right: 8px"
-                    />
-                    <span>激活此配置 (相同服务类型的其他配置将被自动停用)</span>
-                </label>
-            </div>
-
-            <div class="form-group">
-                <label>此配置的运行参数</label>
-                <p>
-                    留空继承插件全局设置。仅影响新提交任务；并发线程数控制单篇
-                    PDF 的翻译工作线程，QPS 控制每秒请求速率。
-                </p>
-                <label for="runtime-qps">最大 QPS</label>
+                    for="runtime-qps"
+                    data-editor-text="llm-editor-qps"
+                ></label>
                 <input
                     id="runtime-qps"
                     type="number"
                     min="1"
                     step="1"
-                    placeholder="继承全局"
+                    data-editor-placeholder="llm-editor-inherit"
                 />
-                <label for="runtime-poolSize">并发线程数（0：自动）</label>
+                <label
+                    for="runtime-poolSize"
+                    data-editor-text="llm-editor-pool"
+                ></label>
                 <input
                     id="runtime-poolSize"
                     type="number"
                     min="0"
                     step="1"
-                    placeholder="继承全局"
+                    data-editor-placeholder="llm-editor-inherit"
                 />
-                <label for="runtime-retryCount"
-                    >额外重试次数（-1：引擎默认；0：不重试）</label
-                >
+                <label
+                    for="runtime-retryCount"
+                    data-editor-text="llm-editor-retries"
+                ></label>
                 <input
                     id="runtime-retryCount"
                     type="number"
                     min="-1"
                     max="100"
                     step="1"
-                    placeholder="继承全局"
+                    data-editor-placeholder="llm-editor-inherit"
                 />
-                <label for="runtime-retryInterval">固定重试间隔（秒）</label>
+                <label
+                    for="runtime-retryInterval"
+                    data-editor-text="llm-editor-interval"
+                ></label>
                 <input
                     id="runtime-retryInterval"
                     type="number"
                     min="0"
                     max="300"
                     step="1"
-                    placeholder="继承全局"
+                    data-editor-placeholder="llm-editor-inherit"
                 />
-                <p>
-                    自定义重试适用于使用 OpenAI SDK 的引擎；其他引擎请设为 -1。
-                </p>
+                <p data-editor-text="llm-editor-retry-help"></p>
             </div>
 
             <div id="stream-options" class="form-group hidden">
                 <label>
                     <input type="checkbox" id="stream" />
-                    启用流式请求
+                    <span data-editor-text="llm-editor-stream"></span>
                 </label>
-                <p>接收完整译文后继续翻译。</p>
+                <p data-editor-text="llm-editor-stream-help"></p>
             </div>
 
             <div class="form-group">
-                <label>额外参数</label>
+                <label data-editor-text="llm-column-extra"></label>
                 <div id="extra-fields-container"></div>
                 <button
                     type="button"
                     id="add-extra-field-btn"
                     class="btn btn-secondary"
                     style="margin-top: 5px; padding: 5px 10px; font-size: 12px"
-                >
-                    + 添加参数
-                </button>
+                    data-editor-text="llm-editor-add-extra"
+                ></button>
             </div>
 
             <div class="button-container">
@@ -370,7 +374,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     class="model-list-link hidden"
                     target="_blank"
                 >
-                    查看支持的模型列表
+                    <span data-editor-text="llm-editor-model-list"></span>
                     <svg
                         viewBox="0 0 24 24"
                         fill="none"
@@ -387,10 +391,16 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     </svg>
                 </a>
                 <div style="display: flex">
-                    <button class="btn btn-secondary" id="cancel-btn">
-                        取消
-                    </button>
-                    <button class="btn btn-primary" id="save-btn">保存</button>
+                    <button
+                        class="btn btn-secondary"
+                        id="cancel-btn"
+                        data-editor-text="llm-editor-cancel"
+                    ></button>
+                    <button
+                        class="btn btn-primary"
+                        id="save-btn"
+                        data-editor-text="llm-editor-save"
+                    ></button>
                 </div>
             </div>
         </div>
@@ -573,8 +583,27 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 "extensions.zotero.__addonRef__.llm.history";
             var Services, Zotero;
 
+            function editorText(key, args) {
+                return window.arguments[0].getString(key, { args });
+            }
+
+            function localizeEditor() {
+                for (const attribute of ["text", "placeholder", "title"]) {
+                    for (const element of document.querySelectorAll(
+                        `[data-editor-${attribute}]`,
+                    )) {
+                        const value = editorText(
+                            element.getAttribute(`data-editor-${attribute}`),
+                        );
+                        if (attribute === "text") element.textContent = value;
+                        else element.setAttribute(attribute, value);
+                    }
+                }
+            }
+
             document.addEventListener("DOMContentLoaded", function () {
                 initGlobals();
+                localizeEditor();
                 if (
                     window.arguments &&
                     window.arguments[0] &&
@@ -785,12 +814,12 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const inputKey = document.createElement("input");
                 inputKey.type = "text";
                 inputKey.className = "extra-key";
-                inputKey.placeholder = "参数名";
+                inputKey.placeholder = editorText("llm-editor-extra-key");
                 inputKey.value = key;
                 const inputValue = document.createElement("input");
                 inputValue.type = "text";
                 inputValue.className = "extra-value";
-                inputValue.placeholder = "参数值";
+                inputValue.placeholder = editorText("llm-editor-extra-value");
                 inputValue.value = value;
                 const btn = document.createElement("button");
                 btn.type = "button";
@@ -812,7 +841,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 if (serviceConfig && serviceConfig.modelListUrl) {
                     linkEl.href = serviceConfig.modelListUrl;
                     linkEl.classList.remove("hidden");
-                    linkEl.title = "打开模型列表";
+                    linkEl.title = editorText("llm-editor-model-list");
                 } else {
                     linkEl.classList.add("hidden");
                     linkEl.href = "#";
@@ -831,7 +860,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
 
                 const defOpt = document.createElement("option");
                 defOpt.value = "";
-                defOpt.text = isUrlLike ? "▼" : "请选择...";
+                defOpt.text = isUrlLike ? "▼" : editorText("llm-editor-select");
                 // 如果列表为空，或者当前值不在列表中，可以把默认选项设为选中(视需求)
                 select.appendChild(defOpt);
 
@@ -864,7 +893,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 while (select.firstChild) select.removeChild(select.firstChild);
                 const defOpt = document.createElement("option");
                 defOpt.value = "";
-                defOpt.text = "请选择...";
+                defOpt.text = editorText("llm-editor-select");
                 select.appendChild(defOpt);
                 keys.forEach((k) => {
                     const option = document.createElement("option");
@@ -961,7 +990,9 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const btn = document.getElementById(id);
                 if (btn) {
                     btn.disabled = !enable;
-                    btn.title = enable ? "删除此记录" : "无法删除";
+                    btn.title = enable
+                        ? editorText("llm-editor-delete-record")
+                        : editorText("llm-editor-cannot-delete");
                 }
             }
 
@@ -974,9 +1005,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 isEditMode = args.isEdit || false;
 
                 document.getElementById("dialog-title").textContent = isEditMode
-                    ? "编辑 LLM API 配置"
-                    : "添加新的 LLM API 配置";
+                    ? editorText("llm-editor-edit")
+                    : editorText("llm-editor-add");
 
+                document.getElementById("name").value = currentData.name || "";
                 populateServiceOptions();
 
                 if (currentData.service)
@@ -1009,11 +1041,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     document.getElementById("apiKey").value,
                 );
                 updateDocLink(currentService);
-
-                document.getElementById("activate").checked =
-                    currentData.activate !== undefined
-                        ? currentData.activate
-                        : true;
 
                 for (const key of [
                     "qps",
@@ -1142,7 +1169,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     .getElementById("btn-del-service")
                     .addEventListener("click", () => {
                         const val = document.getElementById("service").value;
-                        if (val && confirm("确定删除服务历史: " + val + "?"))
+                        if (
+                            val &&
+                            confirm(
+                                editorText("llm-editor-confirm-delete", {
+                                    service: val,
+                                }),
+                            )
+                        )
                             deleteUserItem("service", val);
                     });
                 document
@@ -1172,7 +1206,23 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function saveLLMApi() {
-                const s = document.getElementById("service").value;
+                const nameInput = document.getElementById("name");
+                const name = nameInput.value.trim();
+                nameInput.setCustomValidity(
+                    !name
+                        ? editorText("llm-name-required")
+                        : (window.arguments?.[0]?.existingNames || []).includes(
+                                name,
+                            )
+                          ? editorText("llm-name-duplicate")
+                          : "",
+                );
+                if (!nameInput.reportValidity()) return;
+                const s = document.getElementById("service").value.trim();
+                if (!s) {
+                    alert(editorText("llm-provider-required"));
+                    return;
+                }
                 const runtime = {};
                 for (const key of [
                     "qps",
@@ -1198,7 +1248,6 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 const m = document.getElementById("model").value;
                 const k = document.getElementById("apiKey").value;
                 const u = document.getElementById("apiUrl").value.trim();
-                const a = document.getElementById("activate").checked;
                 if (streamKey(s)) {
                     extraDataObject[streamKey(s)] =
                         document.getElementById("stream").checked;
@@ -1211,7 +1260,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                     model: m,
                     apiKey: k,
                     apiUrl: u,
-                    activate: a,
+                    name,
                     extraData: extraDataObject,
                     runtime,
                 };

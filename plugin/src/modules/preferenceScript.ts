@@ -1,10 +1,14 @@
+import { getString } from "../utils/locale";
 import { config, version } from "../../package.json";
 import { getPref, setPref } from "../utils/prefs";
 import {
-    getActiveLLMApiByService,
+    loadLLMApisFromPrefs,
+    getSelectedLLMApi,
+    saveLLMApisToPrefs,
+    createLLMApiFromFormData,
+    validateLLMApiName,
     llmApiManager,
     LLMApiData,
-    RuntimeSettings,
     resolveRuntimeSettings,
     emptyLLMApi,
     formatExtraDataForDisplay,
@@ -16,10 +20,6 @@ import type {
     ValidateConfigResponse,
 } from "./pdf2zhTypes";
 import axios from "axios";
-
-function normalizeServiceName(value: string): string {
-    return value.trim().toLowerCase().replace(/[-_]/g, "");
-}
 
 export async function registerPrefsScripts(_window: Window) {
     if (!addon.data.prefs) {
@@ -33,15 +33,8 @@ export async function registerPrefsScripts(_window: Window) {
     }
     if (!addon.data.llmApis) {
         addon.data.llmApis = {
-            map: new Map<string, LLMApiData>(),
             cachedKeys: [],
         };
-    }
-    const normalizedService = normalizeServiceName(
-        getPref("service")?.toString() || "siliconflowfree",
-    );
-    if (normalizedService !== getPref("service")) {
-        setPref("service", normalizedService);
     }
     bindPrefEvents();
     updateVersionUI();
@@ -54,6 +47,24 @@ function bindPrefEvents() {
     if (!window) return;
     const doc = window.document;
     if (!doc) return;
+
+    const configMenu = doc.getElementById(
+        `zotero-prefpane-${config.addonRef}-selectedLLMApiKey`,
+    ) as XUL.MenuList | null;
+    configMenu?.addEventListener("command", () =>
+        setPref("selectedLLMApiKey", configMenu.value),
+    );
+    const suffixMenu = doc.getElementById(
+        `zotero-prefpane-${config.addonRef}-translationTitleSuffix`,
+    ) as XUL.MenuList | null;
+    if (suffixMenu) {
+        const value = getPref("translationTitleSuffix")?.toString();
+        suffixMenu.value =
+            value === "provider" || value === "modelname" ? value : "name";
+        suffixMenu.addEventListener("command", () =>
+            setPref("translationTitleSuffix", suffixMenu.value),
+        );
+    }
 
     const sourceLangSelect = doc.getElementById(
         `zotero-prefpane-${config.addonRef}-sourceLangSelect`,
@@ -136,13 +147,6 @@ function bindPrefEvents() {
     const editButton = doc.getElementById(
         `zotero-prefpane-${config.addonRef}-llmapi-edit`,
     );
-    const activateButton = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-llmapi-activate`,
-    );
-    const toTopButton = doc.getElementById(
-        `zotero-prefpane-${config.addonRef}-llmapi-totop`,
-    );
-
     addButton?.addEventListener("command", async () => {
         await openLLMApiEditDialog();
     });
@@ -150,8 +154,11 @@ function bindPrefEvents() {
         const selectedKeys = getLLMApiSelection();
         selectedKeys.forEach((key) => {
             if (key) {
+                if (getPref("selectedLLMApiKey") === key) {
+                    setPref("selectedLLMApiKey", "");
+                    ztoolkit.getGlobal("alert")(getString("llm-select-config"));
+                }
                 llmApiManager.deleteLLMApi(key);
-                addon.data.llmApis?.map.delete(key);
             }
         });
         updateCachedLLMApiKeys();
@@ -164,55 +171,13 @@ function bindPrefEvents() {
             await openLLMApiEditDialog(selectedKeys[0]);
         }
     });
-    activateButton?.addEventListener("command", () => {
-        const selectedKeys = getLLMApiSelection();
-        if (selectedKeys.length !== 1) {
-            return;
-        }
-        const key = selectedKeys[0];
-        const llmApi = addon.data.llmApis?.map.get(key);
-        if (!llmApi) {
-            return;
-        }
-        if (llmApi.activate) {
-            llmApiManager.deactivateLLMApi(key);
-        } else {
-            llmApiManager.activateLLMApi(key);
-        }
-        addon.data.llmApis?.map.set(key, llmApiManager.getLLMApi(key)!);
-        saveLLMApisToPrefs();
-        updateLLMApiTableUI();
-    });
-    toTopButton?.addEventListener("command", () => {
-        const selectedKeys = getLLMApiSelection();
-        if (selectedKeys.length !== 1) {
-            return;
-        }
-        const key = selectedKeys[0];
-        const llmApi = addon.data.llmApis?.map.get(key);
-        if (!llmApi) {
-            return;
-        }
-        const llmApis = Array.from(addon.data.llmApis?.map.values() || []);
-        const index = llmApis.findIndex((entry) => entry.key === key);
-        if (index === -1) {
-            return;
-        }
-        llmApis.splice(index, 1);
-        llmApis.unshift(llmApi);
-        addon.data.llmApis?.map.clear();
-        llmApis.forEach((entry) =>
-            addon.data.llmApis?.map.set(entry.key, entry),
-        );
-        updateCachedLLMApiKeys();
-        saveLLMApisToPrefs();
-        updateLLMApiTableUI();
-    });
 }
 
 export async function initTableUI() {
     if (!addon.data.prefs?.window) return;
     loadLLMApisFromPrefs();
+    updateCachedLLMApiKeys();
+    updateLLMApiMenu();
     const renderLock = Zotero.Promise.defer();
     addon.data.prefs.tableHelper = new ztoolkit.VirtualizedTable(
         addon.data.prefs.window!,
@@ -223,12 +188,36 @@ export async function initTableUI() {
         .setProp({
             id: `zotero-prefpane-${config.addonRef}-llmapi-table`,
             columns: [
-                { dataKey: "service", label: "服务", width: 160 },
-                { dataKey: "model", label: "模型", width: 220 },
-                { dataKey: "apiUrl", label: "API URL", width: 170 },
-                { dataKey: "apiKey", label: "API Key", width: 100 },
-                { dataKey: "activate", label: "激活", width: 70 },
-                { dataKey: "extraData", label: "额外参数", width: 200 },
+                {
+                    dataKey: "name",
+                    label: getString("llm-column-name"),
+                    width: 180,
+                },
+                {
+                    dataKey: "service",
+                    label: getString("llm-column-provider"),
+                    width: 160,
+                },
+                {
+                    dataKey: "model",
+                    label: getString("llm-column-model"),
+                    width: 220,
+                },
+                {
+                    dataKey: "apiUrl",
+                    label: getString("llm-column-url"),
+                    width: 170,
+                },
+                {
+                    dataKey: "apiKey",
+                    label: getString("llm-column-key"),
+                    width: 100,
+                },
+                {
+                    dataKey: "extraData",
+                    label: getString("llm-column-extra"),
+                    width: 200,
+                },
             ],
             showHeader: true,
             multiSelect: true,
@@ -242,7 +231,6 @@ export async function initTableUI() {
         .setProp("getRowData", getRowData)
         .setProp("onSelectionChange", () => {
             const selectedKeys = getLLMApiSelection();
-            addon.data.llmApis.selectedKey = selectedKeys[0];
             addon.data.prefs?.window?.document
                 .querySelectorAll(".llmapi-selection")
                 ?.forEach((e) =>
@@ -265,51 +253,28 @@ export async function initTableUI() {
 }
 
 function updateCachedLLMApiKeys() {
-    addon.data.llmApis.cachedKeys = Array.from(
-        addon.data.llmApis?.map.keys() || [],
-    );
+    addon.data.llmApis = {
+        cachedKeys: llmApiManager.getAllLLMApis().map((entry) => entry.key),
+    };
 }
 
 async function openLLMApiEditDialog(key?: string): Promise<boolean> {
-    const llmApi = key ? addon.data.llmApis?.map.get(key) : emptyLLMApi;
-    const dialogData = {
-        service: llmApi?.service || "",
-        model: llmApi?.model || "",
-        apiKey: llmApi?.apiKey || "",
-        apiUrl: llmApi?.apiUrl || "",
-        activate: llmApi?.activate || false,
-        extraData: llmApi?.extraData || {},
-        runtime: llmApi?.runtime || {},
-    };
-
     const windowArgs: {
-        _initPromise: any;
-        data: {
-            service: string;
-            model: string;
-            apiKey: string;
-            apiUrl: string;
-            activate: boolean;
-            extraData: any;
-            runtime?: RuntimeSettings;
-        };
+        _initPromise: ReturnType<typeof Zotero.Promise.defer>;
+        data: LLMApiData;
         isEdit: boolean;
-        result?: {
-            success: boolean;
-            data: {
-                service: string;
-                model: string;
-                apiKey: string;
-                apiUrl: string;
-                activate: boolean;
-                extraData?: Record<string, any>;
-                runtime?: RuntimeSettings;
-            };
-        };
+        existingNames: string[];
+        getString: typeof getString;
+        result?: { success: boolean; data: Omit<LLMApiData, "key"> };
     } = {
         _initPromise: Zotero.Promise.defer(),
-        data: dialogData,
+        data: (key && llmApiManager.getLLMApi(key)) || emptyLLMApi,
         isEdit: !!key,
+        getString,
+        existingNames: llmApiManager
+            .getAllLLMApis()
+            .filter((entry) => entry.key !== key)
+            .map((entry) => entry.name),
     };
 
     const dialogWindow = Zotero.getMainWindow().openDialog(
@@ -323,7 +288,7 @@ async function openLLMApiEditDialog(key?: string): Promise<boolean> {
     }
     await windowArgs._initPromise.promise;
 
-    const result = await new Promise<any>((resolve) => {
+    const result = await new Promise<typeof windowArgs.result>((resolve) => {
         const checkClosed = () => {
             if (dialogWindow.closed) {
                 resolve(windowArgs.result);
@@ -339,61 +304,51 @@ async function openLLMApiEditDialog(key?: string): Promise<boolean> {
     }
 
     const userData = result.data;
-    const newLLMApi: LLMApiData = {
-        key: key || Zotero.Utilities.generateObjectKey(),
-        service: normalizeServiceName(userData.service || ""),
-        model: userData.model || "",
-        apiKey: userData.apiKey,
-        apiUrl: userData.apiUrl,
-        activate: userData.activate,
-        extraData: userData.extraData || {},
-        runtime: userData.runtime,
-    };
-    addon.data.llmApis?.map.set(newLLMApi.key, newLLMApi);
+    const error = validateLLMApiName(
+        userData.name || "",
+        llmApiManager.getAllLLMApis(),
+        key,
+    );
+    if (error) {
+        ztoolkit.getGlobal("alert")(getString(error));
+        return false;
+    }
+    const wasEmpty = llmApiManager.getAllLLMApis().length === 0;
+    const newLLMApi = createLLMApiFromFormData({ ...userData, key });
+    const savedKey = llmApiManager.updateLLMApi(newLLMApi);
     updateCachedLLMApiKeys();
-    llmApiManager.updateLLMApi(newLLMApi);
+    if (wasEmpty) setPref("selectedLLMApiKey", savedKey);
     saveLLMApisToPrefs();
     updateLLMApiTableUI();
     return true;
 }
 
-function saveLLMApisToPrefs() {
-    if (!addon.data.llmApis) return;
-    const llmApisArray = Array.from(addon.data.llmApis.map.values());
-    setPref("llmApis", JSON.stringify(llmApisArray) as string);
-}
-
-export function loadLLMApisFromPrefs() {
-    const llmApisJson = getPref("llmApis");
-    if (!llmApisJson || typeof llmApisJson !== "string") {
-        return;
+function updateLLMApiMenu() {
+    const doc = addon.data.prefs?.window?.document;
+    const menu = doc?.getElementById(
+        `zotero-prefpane-${config.addonRef}-selectedLLMApiKey`,
+    ) as XUL.MenuList | null;
+    const popup = menu?.querySelector("menupopup");
+    if (!doc || !menu || !popup) return;
+    popup.replaceChildren();
+    const placeholder = doc.createXULElement("menuitem");
+    placeholder.setAttribute("value", "");
+    placeholder.setAttribute("label", getString("llm-select-config"));
+    popup.appendChild(placeholder);
+    for (const entry of llmApiManager.getAllLLMApis()) {
+        const item = doc.createXULElement("menuitem");
+        item.setAttribute("value", entry.key);
+        item.setAttribute(
+            "label",
+            entry.model ? `${entry.name} / ${entry.model}` : entry.name,
+        );
+        popup.appendChild(item);
     }
-    try {
-        const llmApisArray = JSON.parse(llmApisJson);
-        if (!Array.isArray(llmApisArray)) {
-            return;
-        }
-        addon.data.llmApis?.map.clear();
-        llmApisArray.forEach((llmApi: LLMApiData) => {
-            if (llmApi.key && llmApi.service) {
-                if (llmApi.activate === undefined) {
-                    llmApi.activate = false;
-                }
-                if (!llmApi.extraData) {
-                    llmApi.extraData = {};
-                }
-                llmApi.service = normalizeServiceName(llmApi.service);
-                addon.data.llmApis?.map.set(llmApi.key, llmApi);
-                llmApiManager.updateLLMApi(llmApi);
-            }
-        });
-        updateCachedLLMApiKeys();
-    } catch (error) {
-        ztoolkit.log("Error loading LLM APIs from prefs:", error);
-    }
+    menu.value = getPref("selectedLLMApiKey")?.toString() || "";
 }
 
 function updateLLMApiTableUI() {
+    updateLLMApiMenu();
     setTimeout(() => addon.data.prefs?.tableHelper?.treeInstance.invalidate());
 }
 
@@ -514,7 +469,7 @@ function getRowData(index: number) {
     let llmApi = emptyLLMApi;
     if (keys.length > index) {
         const key = keys[index];
-        llmApi = addon.data.llmApis?.map.get(key) || emptyLLMApi;
+        llmApi = llmApiManager.getLLMApi(key) || emptyLLMApi;
     }
     return {
         key: llmApi.key || "",
@@ -523,7 +478,7 @@ function getRowData(index: number) {
         apiUrl: llmApi.apiUrl || "",
         apiKey: llmApi.apiKey || "",
         extraData: formatExtraDataForDisplay(llmApi.extraData),
-        activate: llmApi.activate ? "✅" : "",
+        name: llmApi.name || "",
     };
 }
 
@@ -872,10 +827,20 @@ async function checkServerConnection() {
             progress: 60,
         });
 
-        const service = normalizeServiceName(
-            getPref("service")?.toString() || "siliconflowfree",
-        );
-        const llmApi = getActiveLLMApiByService(service);
+        const llmApi = getSelectedLLMApi();
+        if (!llmApi) {
+            const message = getString("llm-server-connected-select");
+            setConnectionResult(doc, message);
+            progressWindow.changeLine({
+                text: message,
+                type: "default",
+                progress: 100,
+            });
+            progressWindow.close();
+            ztoolkit.getGlobal("alert")(message);
+            return;
+        }
+        const service = llmApi.service;
         const validateResponse = await axios.post<ValidateConfigResponse>(
             `${serverUrl}/validate-config`,
             {

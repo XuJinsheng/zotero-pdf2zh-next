@@ -1,16 +1,22 @@
+import { getString } from "../utils/locale";
 import { getPref } from "../utils/prefs";
-import { ServerConfig, PDFOperationOptions, OutputMode } from "./pdf2zhTypes";
-import { loadLLMApisFromPrefs } from "./preferenceScript";
-import { RuntimeSettings, resolveRuntimeSettings } from "./llmApiManager";
+import {
+    ServerConfig,
+    PDFOperationOptions,
+    OutputMode,
+    TranslationTitleSnapshot,
+    TranslationTitleSuffix,
+} from "./pdf2zhTypes";
+import { getSelectedLLMApi, resolveRuntimeSettings } from "./llmApiManager";
 
-type ActiveLLMApiConfig = {
-    service: string;
-    model: string;
-    apiKey: string;
-    apiUrl: string;
-    extraData: Record<string, any>;
-    runtime?: RuntimeSettings;
-} | null;
+export function translationTitleLabel(
+    snapshot: TranslationTitleSnapshot,
+): string {
+    if (snapshot.suffix === "name") return snapshot.name || snapshot.provider;
+    if (snapshot.suffix === "modelname")
+        return snapshot.model || snapshot.provider;
+    return snapshot.provider;
+}
 
 export type TaskOutputResponse = {
     fileName: string;
@@ -35,16 +41,18 @@ export class PDF2zhHelperFactory {
         fileData: { fileName: string; base64: string },
         config: ServerConfig,
     ): Record<string, unknown> {
-        const llmApiConfig = this.getActiveLLMApiConfig(config.service);
-        const requestBody: Record<string, unknown> = {
+        const profile = config.llmApi;
+        if (!profile) throw new Error(getString("llm-select-config"));
+        const { key: _key, name: _name, ...llmApiConfig } = profile;
+        return {
             fileName: fileData.fileName,
             fileContent: fileData.base64,
             sourceLang: config.sourceLang,
             targetLang: config.targetLang,
             outputModes: config.outputModes,
-            service: config.service,
+            service: profile.service,
             skipLastPages: config.skipLastPages,
-            ...resolveRuntimeSettings(config, llmApiConfig?.runtime),
+            ...resolveRuntimeSettings(config, profile.runtime),
             ocr: config.ocr,
             autoOcr: config.autoOcr,
             translateTableText: config.translateTableText,
@@ -52,17 +60,14 @@ export class PDF2zhHelperFactory {
             noWatermark: config.noWatermark,
             disableTermExtraction: config.disableTermExtraction,
             fontFamily: config.fontFamily,
+            llm_api: llmApiConfig,
         };
-        if (llmApiConfig) {
-            requestBody.llm_api = llmApiConfig;
-        }
-        return requestBody;
     }
 
     static async handleOutputResponse(
         response: TaskOutputResponse,
         item: Zotero.Item,
-        config: ServerConfig,
+        config: Pick<ServerConfig, "service" | "titleSnapshot">,
     ) {
         const options = this.getPDFOptions();
         const tempPath = PathUtils.join(PathUtils.tempDir, response.fileName);
@@ -73,7 +78,9 @@ export class PDF2zhHelperFactory {
                 filePath: tempPath,
                 options,
                 outputMode: response.outputMode,
-                service: config.service,
+                service: config.titleSnapshot
+                    ? translationTitleLabel(config.titleSnapshot)
+                    : config.service,
             });
         } finally {
             if (await this.safeExists(tempPath)) {
@@ -181,11 +188,25 @@ export class PDF2zhHelperFactory {
     }
 
     static getServerConfig(): ServerConfig {
+        const selected = getSelectedLLMApi();
+        const llmApi = selected
+            ? (JSON.parse(JSON.stringify(selected)) as typeof selected)
+            : undefined;
+        const value = getPref("translationTitleSuffix")?.toString();
+        const suffix: TranslationTitleSuffix =
+            value === "provider" || value === "modelname" ? value : "name";
         return {
+            llmApi,
+            titleSnapshot: llmApi
+                ? {
+                      name: llmApi.name,
+                      provider: llmApi.service,
+                      model: llmApi.model,
+                      suffix,
+                  }
+                : undefined,
             serverUrl: getPref("new_serverip")?.toString() || "",
-            service: this.normalizeServiceName(
-                getPref("service")?.toString() || "siliconflowfree",
-            ),
+            service: llmApi?.service || "",
             sourceLang: getPref("sourceLang")?.toString() || "en",
             targetLang: getPref("targetLang")?.toString() || "zh-CN",
             outputModes: this.getOutputModesFromPrefs(),
@@ -204,29 +225,6 @@ export class PDF2zhHelperFactory {
                 getPref("disableTermExtraction")?.toString() || "false",
             fontFamily: getPref("fontFamily")?.toString() || "auto",
         };
-    }
-
-    static getActiveLLMApiConfig(service: string): ActiveLLMApiConfig {
-        loadLLMApisFromPrefs();
-        if (!addon.data.llmApis?.map) {
-            return null;
-        }
-        for (const [, llmApi] of addon.data.llmApis.map) {
-            if (
-                llmApi.activate &&
-                this.normalizeServiceName(llmApi.service) === service
-            ) {
-                return {
-                    service,
-                    model: llmApi.model,
-                    apiKey: llmApi.apiKey,
-                    apiUrl: llmApi.apiUrl,
-                    extraData: llmApi.extraData || {},
-                    runtime: llmApi.runtime,
-                };
-            }
-        }
-        return null;
     }
 
     static isTrue(value: string | number | boolean | undefined): boolean {
@@ -280,10 +278,6 @@ export class PDF2zhHelperFactory {
     static getCollections(item: Zotero.Item): number[] | undefined {
         const collections = item.getCollections();
         return collections.length > 0 ? [collections[0]] : undefined;
-    }
-
-    static normalizeServiceName(value: string): string {
-        return value.trim().toLowerCase().replace(/[-_]/g, "");
     }
 
     static getOutputModesFromPrefs(): OutputMode[] {

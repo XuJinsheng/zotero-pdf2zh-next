@@ -1,8 +1,20 @@
+import type { LLMApiData } from "./llmApiManager";
+
 export type OutputMode = "mono" | "dual";
 export type ServerTaskStatus =
     "queued" | "running" | "cancelling" | "completed" | "failed" | "cancelled";
 
+export type TranslationTitleSuffix = "name" | "provider" | "modelname";
+export interface TranslationTitleSnapshot {
+    name: string;
+    provider: string;
+    model: string;
+    suffix: TranslationTitleSuffix;
+}
+
 export interface ServerConfig {
+    llmApi?: LLMApiData;
+    titleSnapshot?: TranslationTitleSnapshot;
     serverUrl: string;
     service: string;
     sourceLang: string;
@@ -94,6 +106,7 @@ export interface ServerTaskSnapshot {
 }
 
 export interface PluginTask extends ServerTaskSnapshot {
+    titleSnapshot?: TranslationTitleSnapshot;
     itemID?: number;
     serverUrl: string;
     source: "local" | "remote";

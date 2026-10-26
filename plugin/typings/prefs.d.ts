@@ -32,6 +32,9 @@ declare namespace _ZoteroTypes {
       "disableTermExtraction": boolean;
       "dialog-service": string;
       "dialog-serviceSelect": string;
+      "selectedLLMApiKey": string;
+      "llmSelectionMigrated": boolean;
+      "translationTitleSuffix": string;
     };
   }
 }

@@ -26,27 +26,33 @@
     align-items: baseline; justify-content: space-between; gap: 12px;
     margin-bottom: 12px; } .form-grid { display: grid; grid-template-columns:
     repeat(2, minmax(240px, 1fr)); gap: 12px 18px; align-items: end; }
-    .form-grid.compact { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
-    .form-field, .toggle-field, .output-field { display: grid; gap: 5px;
-    min-width: 0; } .field-label, .toggle-label { font-size: 12px; color:
-    color-mix(in srgb, FieldText 72%, transparent); } .inline-controls {
-    display: flex; gap: 8px; align-items: center; min-width: 0; }
-    .server-url-input, .code-input, .short-input, .select-input { min-height:
-    26px; box-sizing: border-box; } .url-row { grid-template-columns:
-    minmax(320px, 1fr) auto; align-items: end; } .server-url-input { width:
-    100%; } .short-input { width: 72px; text-align: center; } .code-input {
-    width: 92px; text-align: center; } .select-input { min-width: 156px; }
-    .output-options, .toggle-grid { display: grid; grid-template-columns:
-    repeat(2, minmax(220px, 1fr)); gap: 10px 18px; } .output-choice, .toggle-row
-    { display: flex; align-items: center; gap: 6px; min-height: 26px; }
-    .connection-result { margin-top: 10px; padding: 8px 10px; border: 1px solid
-    color-mix(in srgb, FieldText 14%, transparent); border-radius: 6px;
-    background: color-mix(in srgb, Field 94%, FieldText 6%); white-space:
-    pre-wrap; line-height: 1.45; font: menu; } .connection-result[hidden] {
-    display: none; } .llm-toolbar { display: flex; flex-wrap: wrap; gap: 8px;
-    margin-top: 10px; } .virtualized-table-container { height: 320px;
-    max-height: 320px; border: 1px solid color-mix(in srgb, FieldText 14%,
-    transparent); border-radius: 6px; overflow: hidden; }
+    .pdf2zh-pref-pane .llm-config-field { grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr); justify-self: stretch; justify-items:
+    stretch; width: 100%; } .pdf2zh-pref-pane .llm-config-field > .field-label {
+    grid-column: 1; grid-row: 1; justify-self: start; text-align: start;
+    margin-inline: 0; } .pdf2zh-pref-pane .llm-config-field > .select-input {
+    grid-column: 1; grid-row: 2; justify-self: stretch; width: 100%; min-width:
+    0; max-width: 100%; margin-inline: 0; } .form-grid.compact {
+    grid-template-columns: repeat(3, minmax(150px, 1fr)); } .form-field,
+    .toggle-field, .output-field { display: grid; gap: 5px; min-width: 0; }
+    .field-label, .toggle-label { font-size: 12px; color: color-mix(in srgb,
+    FieldText 72%, transparent); } .inline-controls { display: flex; gap: 8px;
+    align-items: center; min-width: 0; } .server-url-input, .code-input,
+    .short-input, .select-input { min-height: 26px; box-sizing: border-box; }
+    .url-row { grid-template-columns: minmax(320px, 1fr) auto; align-items: end;
+    } .server-url-input { width: 100%; } .short-input { width: 72px; text-align:
+    center; } .code-input { width: 92px; text-align: center; } .select-input {
+    min-width: 156px; } .output-options, .toggle-grid { display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 10px 18px; }
+    .output-choice, .toggle-row { display: flex; align-items: center; gap: 6px;
+    min-height: 26px; } .connection-result { margin-top: 10px; padding: 8px
+    10px; border: 1px solid color-mix(in srgb, FieldText 14%, transparent);
+    border-radius: 6px; background: color-mix(in srgb, Field 94%, FieldText 6%);
+    white-space: pre-wrap; line-height: 1.45; font: menu; }
+    .connection-result[hidden] { display: none; } .llm-toolbar { display: flex;
+    flex-wrap: wrap; gap: 8px; margin-top: 10px; } .virtualized-table-container
+    { height: 320px; max-height: 320px; border: 1px solid color-mix(in srgb,
+    FieldText 14%, transparent); border-radius: 6px; overflow: hidden; }
     #zotero-prefpane-__addonRef__-llmapi-table-container { height: 100%; width:
     100%; } .action-button { min-width: auto; height: 24px;
     -moz-context-properties: fill, fill-opacity; fill: currentColor; }
@@ -151,61 +157,19 @@
             />
         </html:div>
         <html:div class="form-grid">
-            <html:div class="form-field">
+            <html:div class="form-field llm-config-field">
                 <html:label
                     class="field-label"
-                    for="zotero-prefpane-__addonRef__-service"
+                    for="zotero-prefpane-__addonRef__-selectedLLMApiKey"
                     data-l10n-id="pref-service"
                 />
-                <html:div class="inline-controls">
-                    <html:input
-                        id="zotero-prefpane-__addonRef__-service"
-                        preference="extensions.zotero.__addonRef__.service"
-                        type="text"
-                        class="code-input"
-                    />
-                    <menulist
-                        id="zotero-prefpane-__addonRef__-serviceSelect"
-                        preference="extensions.zotero.__addonRef__.service"
-                        class="select-input"
-                    >
-                        <menupopup>
-                            <menuitem
-                                value="siliconflowfree"
-                                label="SiliconFlow Free"
-                            />
-                            <menuitem value="openai" label="OpenAI" />
-                            <menuitem
-                                value="aliyundashscope"
-                                label="AliyunDashScope"
-                            />
-                            <menuitem value="deepseek" label="DeepSeek" />
-                            <menuitem value="gemini" label="Gemini" />
-                            <menuitem value="siliconflow" label="SiliconFlow" />
-                            <menuitem value="zhipu" label="Zhipu" />
-                            <menuitem value="modelscope" label="ModelScope" />
-                            <menuitem value="qwenmt" label="QwenMt" />
-                            <menuitem
-                                value="openaicompatible"
-                                label="OpenAICompatible"
-                            />
-                            <menuitem value="azureopenai" label="AzureOpenAI" />
-                            <menuitem value="azure" label="Azure" />
-                            <menuitem value="deepl" label="DeepL" />
-                            <menuitem value="ollama" label="Ollama" />
-                            <menuitem value="xinference" label="Xinference" />
-                            <menuitem value="anythingllm" label="AnythingLLM" />
-                            <menuitem value="dify" label="Dify" />
-                            <menuitem value="grok" label="Grok" />
-                            <menuitem value="groq" label="Groq" />
-                            <menuitem
-                                value="tencentmechinetranslation"
-                                label="Tencent"
-                            />
-                            <menuitem value="claudecode" label="ClaudeCode" />
-                        </menupopup>
-                    </menulist>
-                </html:div>
+                <menulist
+                    id="zotero-prefpane-__addonRef__-selectedLLMApiKey"
+                    preference="extensions.zotero.__addonRef__.selectedLLMApiKey"
+                    class="select-input"
+                >
+                    <menupopup />
+                </menulist>
             </html:div>
 
             <html:div class="form-field">
@@ -297,6 +261,33 @@
                     for="zotero-prefpane-__addonRef__-rename"
                     data-l10n-id="pref-rename"
                 />
+            </html:div>
+            <html:div class="form-field">
+                <html:label
+                    class="field-label"
+                    for="zotero-prefpane-__addonRef__-translationTitleSuffix"
+                    data-l10n-id="pref-title-suffix"
+                />
+                <menulist
+                    id="zotero-prefpane-__addonRef__-translationTitleSuffix"
+                    preference="extensions.zotero.__addonRef__.translationTitleSuffix"
+                    class="select-input"
+                >
+                    <menupopup>
+                        <menuitem
+                            value="name"
+                            data-l10n-id="pref-title-suffix-name"
+                        />
+                        <menuitem
+                            value="provider"
+                            data-l10n-id="pref-title-suffix-provider"
+                        />
+                        <menuitem
+                            value="modelname"
+                            data-l10n-id="pref-title-suffix-model"
+                        />
+                    </menupopup>
+                </menulist>
             </html:div>
             <html:div class="toggle-row">
                 <checkbox
@@ -508,20 +499,6 @@
                 class="llmapi-selection"
                 label="删除"
                 data-l10n-id="pref-llmapi-remove"
-                disabled="true"
-            />
-            <button
-                id="zotero-prefpane-__addonRef__-llmapi-activate"
-                class="llmapi-selection llmapi-selection-single"
-                label="激活"
-                data-l10n-id="pref-llmapi-activate"
-                disabled="true"
-            />
-            <button
-                id="zotero-prefpane-__addonRef__-llmapi-totop"
-                class="llmapi-selection llmapi-selection-single"
-                label="置顶"
-                data-l10n-id="pref-llmapi-totop"
                 disabled="true"
             />
         </html:div>
