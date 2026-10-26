@@ -2255,7 +2255,7 @@ wheels = [
 
 [[package]]
 name = "zotero-pdf2zh-next"
-version = "5.4.0"
+version = "5.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "azure-ai-translation-text" },
@@ -2311,7 +2311,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "azure-ai-translation-text", specifier = "<=1.0.1" },
-    { name = "bitstring", specifier = ">=4.3.0" },
+    { name = "bitstring", specifier = ">=4.3.0,<5" },
     { name = "chardet", specifier = ">=5.2.0" },
     { name = "charset-normalizer", specifier = ">=2.0.0" },
     { name = "configargparse", specifier = ">=1.7" },
@@ -2329,7 +2329,7 @@ requires-dist = [
     { name = "ollama" },
     { name = "onnx", specifier = ">=1.18.0" },
     { name = "onnxruntime", specifier = ">=1.16.1" },
-    { name = "openai", specifier = ">=1.59.3" },
+    { name = "openai", specifier = ">=1.66.3" },
     { name = "opencv-python-headless", specifier = ">=4.10.0.84" },
     { name = "orjson", specifier = ">=3.10.14" },
     { name = "peewee", specifier = ">=3.17.8" },

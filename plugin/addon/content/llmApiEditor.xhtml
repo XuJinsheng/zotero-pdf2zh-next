@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
-<?xml-stylesheet href="chrome://global/skin/" type="text/css"?> <?xml-stylesheet
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet
 href="chrome://zotero/skin/zotero.css" type="text/css"?>
 <!DOCTYPE html>
 <html
@@ -340,6 +341,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 <p>
                     自定义重试适用于使用 OpenAI SDK 的引擎；其他引擎请设为 -1。
                 </p>
+            </div>
+
+            <div id="stream-options" class="form-group hidden">
+                <label>
+                    <input type="checkbox" id="stream" />
+                    启用流式请求
+                </label>
+                <p>接收完整译文后继续翻译。</p>
             </div>
 
             <div class="form-group">
@@ -904,10 +913,24 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 if (type == "service") {
                     document.getElementById("service").value = value;
                     document.getElementById("serviceselect").value = value;
+                    updateStreamOptions(value);
                 } else if (type == "model") {
                     document.getElementById("model").value = value;
                     document.getElementById("modelselect").value = value;
                 }
+            }
+
+            function streamKey(service) {
+                return {
+                    openai: "openai_stream",
+                    openaicompatible: "openai_compatible_stream",
+                }[service];
+            }
+
+            function updateStreamOptions(service) {
+                document
+                    .getElementById("stream-options")
+                    .classList.toggle("hidden", !streamKey(service));
             }
 
             function checkAllDeleteButtons() {
@@ -968,6 +991,14 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                         currentData.apiUrl;
 
                 const currentService = document.getElementById("service").value;
+                updateStreamOptions(currentService);
+                const streamValue =
+                    currentData.extraData?.[streamKey(currentService)];
+                document.getElementById("stream").checked =
+                    streamValue === true ||
+                    ["true", "1", "yes", "on"].includes(
+                        String(streamValue).toLowerCase(),
+                    );
                 updateModelOptions(currentService);
                 updateUrlSelectOptions(
                     currentService,
@@ -995,8 +1026,10 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 }
 
                 if (currentData.extraData) {
-                    for (const key in currentData.extraData)
+                    for (const key in currentData.extraData) {
+                        if (key === streamKey(currentService)) continue;
                         addExtraFieldRow(key, currentData.extraData[key]);
+                    }
                 }
                 checkAllDeleteButtons();
             }
@@ -1139,6 +1172,7 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
             }
 
             function saveLLMApi() {
+                const s = document.getElementById("service").value;
                 const runtime = {};
                 for (const key of [
                     "qps",
@@ -1157,14 +1191,18 @@ href="chrome://zotero/skin/zotero.css" type="text/css"?>
                 for (let i = 0; i < rows.length; i++) {
                     const k = rows[i].querySelector(".extra-key").value;
                     const v = rows[i].querySelector(".extra-value").value;
+                    if (k.trim().replace(/-/g, "_") === streamKey(s)) continue;
                     if (k) extraDataObject[k] = v;
                 }
 
-                const s = document.getElementById("service").value;
                 const m = document.getElementById("model").value;
                 const k = document.getElementById("apiKey").value;
                 const u = document.getElementById("apiUrl").value.trim();
                 const a = document.getElementById("activate").checked;
+                if (streamKey(s)) {
+                    extraDataObject[streamKey(s)] =
+                        document.getElementById("stream").checked;
+                }
 
                 saveUserHistory(s, m, u, k);
 

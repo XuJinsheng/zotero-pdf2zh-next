@@ -2,7 +2,12 @@
 
 这里记录 `zotero-pdf2zh-next` 每个版本的重要变化。GitHub Release 的说明会从对应版本的条目生成。
 
-## Unreleased
+## v5.5.0 - 未发布
+
+- OpenAI 使用 Responses 接口，OpenAI Compatible 保留 Chat Completions 接口。
+- 两种服务新增默认关闭的流式请求开关，支持配置保存、最终译文读取及断流重试。
+- 修复父条目查询结果的类型检查错误，恢复插件正常构建。
+- 将 `bitstring` 依赖限制为 `>=4.3.0,<5`，避免安装已移除 `BitStream` 的 5.x 版本导致服务启动失败。
 
 ## v5.4.0 - 2026-09-19
 
