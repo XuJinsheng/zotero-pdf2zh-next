@@ -57,10 +57,10 @@ function bindPrefEvents() {
 
     const sourceLangSelect = doc.getElementById(
         `zotero-prefpane-${config.addonRef}-sourceLangSelect`,
-    );
+    ) as XUL.MenuList | null;
     const targetLangSelect = doc.getElementById(
         `zotero-prefpane-${config.addonRef}-targetLangSelect`,
-    );
+    ) as XUL.MenuList | null;
     const outputMonoCheckbox = doc.getElementById(
         `zotero-prefpane-${config.addonRef}-outputMono`,
     ) as XUL.Checkbox | null;
@@ -71,22 +71,22 @@ function bindPrefEvents() {
         `zotero-prefpane-${config.addonRef}-new_serverip`,
     );
 
-    sourceLangSelect?.replaceChildren();
-    targetLangSelect?.replaceChildren();
+    const sourceLangPopup = sourceLangSelect?.querySelector("menupopup");
+    const targetLangPopup = targetLangSelect?.querySelector("menupopup");
+    sourceLangPopup?.replaceChildren();
+    targetLangPopup?.replaceChildren();
     for (const [langName, langCode] of Object.entries(lang_map)) {
-        const option = doc.createElement("option");
-        option.value = langCode;
-        option.textContent = langName;
-        sourceLangSelect?.appendChild(option.cloneNode(true));
-        targetLangSelect?.appendChild(option.cloneNode(true));
+        const option = doc.createXULElement("menuitem");
+        option.setAttribute("value", langCode);
+        option.setAttribute("label", langName);
+        sourceLangPopup?.appendChild(option.cloneNode(true));
+        targetLangPopup?.appendChild(option.cloneNode(true));
     }
     if (sourceLangSelect) {
-        (sourceLangSelect as HTMLSelectElement).value =
-            getPref("sourceLang")?.toString() || "en";
+        sourceLangSelect.value = getPref("sourceLang")?.toString() || "en";
     }
     if (targetLangSelect) {
-        (targetLangSelect as HTMLSelectElement).value =
-            getPref("targetLang")?.toString() || "zh-CN";
+        targetLangSelect.value = getPref("targetLang")?.toString() || "zh-CN";
     }
 
     const ensureOutputModes = (fallbackKey: "outputMono" | "outputDual") => {

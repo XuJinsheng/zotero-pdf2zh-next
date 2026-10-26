@@ -164,47 +164,47 @@
                         type="text"
                         class="code-input"
                     />
-                    <html:select
+                    <menulist
                         id="zotero-prefpane-__addonRef__-serviceSelect"
                         preference="extensions.zotero.__addonRef__.service"
                         class="select-input"
                     >
-                        <html:option value="siliconflowfree"
-                            >SiliconFlow Free</html:option
-                        >
-                        <html:option value="openai">OpenAI</html:option>
-                        <html:option value="aliyundashscope"
-                            >AliyunDashScope</html:option
-                        >
-                        <html:option value="deepseek">DeepSeek</html:option>
-                        <html:option value="gemini">Gemini</html:option>
-                        <html:option value="siliconflow"
-                            >SiliconFlow</html:option
-                        >
-                        <html:option value="zhipu">Zhipu</html:option>
-                        <html:option value="modelscope">ModelScope</html:option>
-                        <html:option value="qwenmt">QwenMt</html:option>
-                        <html:option value="openaicompatible"
-                            >OpenAICompatible</html:option
-                        >
-                        <html:option value="azureopenai"
-                            >AzureOpenAI</html:option
-                        >
-                        <html:option value="azure">Azure</html:option>
-                        <html:option value="deepl">DeepL</html:option>
-                        <html:option value="ollama">Ollama</html:option>
-                        <html:option value="xinference">Xinference</html:option>
-                        <html:option value="anythingllm"
-                            >AnythingLLM</html:option
-                        >
-                        <html:option value="dify">Dify</html:option>
-                        <html:option value="grok">Grok</html:option>
-                        <html:option value="groq">Groq</html:option>
-                        <html:option value="tencentmechinetranslation"
-                            >Tencent</html:option
-                        >
-                        <html:option value="claudecode">ClaudeCode</html:option>
-                    </html:select>
+                        <menupopup>
+                            <menuitem
+                                value="siliconflowfree"
+                                label="SiliconFlow Free"
+                            />
+                            <menuitem value="openai" label="OpenAI" />
+                            <menuitem
+                                value="aliyundashscope"
+                                label="AliyunDashScope"
+                            />
+                            <menuitem value="deepseek" label="DeepSeek" />
+                            <menuitem value="gemini" label="Gemini" />
+                            <menuitem value="siliconflow" label="SiliconFlow" />
+                            <menuitem value="zhipu" label="Zhipu" />
+                            <menuitem value="modelscope" label="ModelScope" />
+                            <menuitem value="qwenmt" label="QwenMt" />
+                            <menuitem
+                                value="openaicompatible"
+                                label="OpenAICompatible"
+                            />
+                            <menuitem value="azureopenai" label="AzureOpenAI" />
+                            <menuitem value="azure" label="Azure" />
+                            <menuitem value="deepl" label="DeepL" />
+                            <menuitem value="ollama" label="Ollama" />
+                            <menuitem value="xinference" label="Xinference" />
+                            <menuitem value="anythingllm" label="AnythingLLM" />
+                            <menuitem value="dify" label="Dify" />
+                            <menuitem value="grok" label="Grok" />
+                            <menuitem value="groq" label="Groq" />
+                            <menuitem
+                                value="tencentmechinetranslation"
+                                label="Tencent"
+                            />
+                            <menuitem value="claudecode" label="ClaudeCode" />
+                        </menupopup>
+                    </menulist>
                 </html:div>
             </html:div>
 
@@ -221,11 +221,13 @@
                         type="text"
                         class="code-input"
                     />
-                    <html:select
+                    <menulist
                         id="zotero-prefpane-__addonRef__-sourceLangSelect"
                         preference="extensions.zotero.__addonRef__.sourceLang"
                         class="select-input"
-                    />
+                    >
+                        <menupopup></menupopup>
+                    </menulist>
                 </html:div>
             </html:div>
 
@@ -242,11 +244,13 @@
                         type="text"
                         class="code-input"
                     />
-                    <html:select
+                    <menulist
                         id="zotero-prefpane-__addonRef__-targetLangSelect"
                         preference="extensions.zotero.__addonRef__.targetLang"
                         class="select-input"
-                    />
+                    >
+                        <menupopup></menupopup>
+                    </menulist>
                 </html:div>
             </html:div>
         </html:div>
@@ -396,16 +400,18 @@
                     data-l10n-id="pref-fontFamily"
                     for="zotero-prefpane-__addonRef__-fontFamily"
                 />
-                <html:select
+                <menulist
                     id="zotero-prefpane-__addonRef__-fontFamily"
                     preference="extensions.zotero.__addonRef__.fontFamily"
                     class="select-input"
                 >
-                    <html:option value="auto">auto</html:option>
-                    <html:option value="serif">serif</html:option>
-                    <html:option value="sans-serif">sans-serif</html:option>
-                    <html:option value="script">script</html:option>
-                </html:select>
+                    <menupopup>
+                        <menuitem value="auto" label="auto" />
+                        <menuitem value="serif" label="serif" />
+                        <menuitem value="sans-serif" label="sans-serif" />
+                        <menuitem value="script" label="script" />
+                    </menupopup>
+                </menulist>
             </html:div>
         </html:div>
 

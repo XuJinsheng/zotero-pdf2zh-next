@@ -36,6 +36,9 @@ test("toolkit 6 menu mounts in the supplied window and dispatches both commands"
                     createElement: (target, tag, props) => {
                         assert.equal(target, document);
                         assert.equal(tag, "menu");
+                        // `menu` also exists in HTML; toolkit defaults to HTML
+                        // unless XUL is explicit. Children inherit this namespace.
+                        assert.equal(props.namespace, "xul");
                         return props;
                     },
                 },

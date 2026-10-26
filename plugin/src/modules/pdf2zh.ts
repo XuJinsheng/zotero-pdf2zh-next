@@ -5,6 +5,7 @@ export class PDF2zhBasicFactory {
         Zotero.PreferencePanes.register({
             pluginID: addon.data.config.addonID,
             src: rootURI + "content/preferences.xhtml",
+            defaultXUL: true,
             label: getString("prefs-title"),
             image: `chrome://${addon.data.config.addonRef}/content/icons/favicon.svg`,
         });
@@ -21,6 +22,7 @@ export class PDF2zhUIFactory {
         ];
         const pdf2zhMenu = ztoolkit.UI.createElement(win.document, "menu", {
             id: menuPrefix,
+            namespace: "xul",
             attributes: {
                 class: "menu-iconic",
                 image: menuIcon,
