@@ -2,7 +2,7 @@
     "name": "zotero-pdf2zh-next",
     "version": "5.5.0",
     "packageManager": "pnpm@12.15.0",
-    "description": "Minimal Zotero bridge for pdf2zh_next",
+    "description": "PDF translation for Zotero with a local pdf2zh_next server",
     "config": {
         "addonName": "zotero-pdf2zh-next",
         "addonID": "zotero-pdf2zh-next@nightwatcher.local",
@@ -12,13 +12,13 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/NightWatcher314/zotero-pdf2zh-next.git"
+        "url": "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git"
     },
-    "author": "NightWatcher",
+    "author": "XuJinsheng",
     "bugs": {
-        "url": "https://github.com/NightWatcher314/zotero-pdf2zh-next/issues"
+        "url": "https://github.com/XuJinsheng/zotero-pdf2zh-next/issues"
     },
-    "homepage": "https://github.com/NightWatcher314/zotero-pdf2zh-next#readme",
+    "homepage": "https://github.com/XuJinsheng/zotero-pdf2zh-next#readme",
     "license": "AGPL-3.0-or-later",
     "scripts": {
         "start": "zotero-plugin serve",

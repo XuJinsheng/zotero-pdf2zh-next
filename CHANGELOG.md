@@ -2,7 +2,10 @@
 
 这里记录 `zotero-pdf2zh-next` 每个版本的重要变化。GitHub Release 的说明会从对应版本的条目生成。
 
-## v5.5.0 - 未发布
+## v5.5.0 - 2026-10-26
+
+- 当前分支由 XuJinsheng 维护；统一仓库、作者、插件更新和发布地址，补充上游归属及第三方引用信息。
+- 修复插件设置页下拉菜单失效。
 
 - OpenAI 使用 Responses 接口，OpenAI Compatible 保留 Chat Completions 接口。
 - 两种服务新增默认关闭的流式请求开关，支持配置保存、最终译文读取及断流重试。

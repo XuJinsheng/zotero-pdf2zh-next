@@ -5,7 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "zotero-pdf2zh-next"
 version = "5.5.0"
-description = "Minimal pdf2zh_next bridge for the Zotero plugin"
+description = "Local PDF translation server for the Zotero zotero-pdf2zh-next plugin"
+authors = [{name = "XuJinsheng"}]
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
 license = "AGPL-3.0-or-later"
@@ -57,6 +58,12 @@ dependencies = [
     "xinference-client>=4.1.0",
     "xsdata[lxml]>=26.10",
 ]
+
+[project.urls]
+Homepage = "https://github.com/XuJinsheng/zotero-pdf2zh-next"
+Repository = "https://github.com/XuJinsheng/zotero-pdf2zh-next"
+Issues = "https://github.com/XuJinsheng/zotero-pdf2zh-next/issues"
+Changelog = "https://github.com/XuJinsheng/zotero-pdf2zh-next/blob/main/CHANGELOG.md"
 
 [project.scripts]
 zotero-pdf2zh-next = "server:main"

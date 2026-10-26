@@ -141,7 +141,7 @@ pnpm --dir plugin exec eslint src/modules/preferenceScript.ts
 然后运行：
 
 ```bash
-scripts/release.sh 5.2.3
+scripts/release.sh 5.5.0 --no-pypi --no-tap
 ```
 
 脚本会做这些事：
@@ -160,11 +160,13 @@ scripts/release.sh 5.2.3
 
 `.github/workflows/publish-pypi.yml` 只接受手动指定的现有 tag，并从该 tag 构建。`scripts/release.sh` 在没有 `UV_PUBLISH_TOKEN` 时负责创建/校验 tag、触发该 workflow、等待 PyPI 可查询；不要直接从 `main` 构建旧版本。
 
-PyPI Trusted Publisher 的绑定必须保持为：owner `NightWatcher314`、repository `zotero-pdf2zh-next`、workflow `publish-pypi.yml`、environment `pypi`。GitHub `pypi` environment 不保存 token；`id-token: write` 只授予发布 job。
+本分支维护者为 `XuJinsheng`，发布目标为 `XuJinsheng/zotero-pdf2zh-next`。PyPI 包名属于上游既有分发；取得该包发布权限后，才可配置 owner `XuJinsheng`、repository `zotero-pdf2zh-next`、workflow `publish-pypi.yml`、environment `pypi` 的 Trusted Publisher。未配置时使用 `--no-pypi`，不能将上游已存在的同号版本视为本分支发布成功。GitHub `pypi` environment 不保存 token；`id-token: write` 只授予发布 job。
 
 同一次 release commit 的 GitHub Release 或 PyPI 其中一端已存在时，脚本会校验 tag/commit 和 PyPI wheel/sdist 后补齐缺失步骤。旧版本 backfill 必须从对应 tag 构建，不能从已前进的 `main` 直接重发。不要恢复单独的 tag 发布 workflow；`scripts/release.sh` 是唯一发版入口。
 
 如果临时不想上传 PyPI，可以传 `--no-pypi`；默认稳定版发版会同时发布 XPI、PyPI、Docker 和 Homebrew。
+
+本分支不默认使用上游 Homebrew tap；发布时传入自己维护的 `--tap-path`，未建立 tap 时使用 `--no-tap`。历史验收记录中的 NightWatcher314 链接保留为上游记录。
 
 Homebrew formula 必须继续 pin `python@3.13`。目前 `pdf2zh_next -> pydantic-core` 依赖链在 Python 3.14 上不应被假定可用。
 
@@ -176,7 +178,7 @@ Homebrew formula 必须继续 pin `python@3.13`。目前 `pdf2zh_next -> pydanti
 
 `.github/workflows/publish-docker.yml` 由 `scripts/release.sh` 在 GitHub Release 创建后触发并等待；也支持手动补发已有稳定版 tag。`--no-docker` 跳过镜像发布，`--no-push` / `--no-release` 同时跳过；预发布版本需使用 `--no-docker`。不会自动更新 NAS stack。
 
-当前发布仓库为 `ghcr.io/nightwatcher314/zotero-pdf2zh-next`，通过仓库变量 `DOCKER_IMAGE` 配置；认证使用内置 `GITHUB_TOKEN`，不保存额外 registry secret。
+当前分支镜像仓库为 `ghcr.io/xujinsheng/zotero-pdf2zh-next`，通过仓库变量 `DOCKER_IMAGE` 配置；认证使用内置 `GITHUB_TOKEN`，不保存额外 registry secret。
 
 2026-09-11 首次发布验收：[CI #34587406079](https://github.com/NightWatcher314/zotero-pdf2zh-next/actions/runs/34587406079) 成功；v5.3.1 的 OCR 初始化、运行版本和 HTTP 健康检查通过。包为 Public，匿名读取 manifest/config 成功；`5.3.1` 与 `latest` 均指向 `sha256:19e73ca31b631d1552f6719e281838934ab48d836a1cc1d8d0f69ea4c1b0ec07`（`linux/amd64`），源码 revision 为 `8beaab118cc90eca67e17f30ca3c795f7986552c`。此次仅发布镜像，未更新 NAS 的 Dockge stack。
 
@@ -191,7 +193,7 @@ CI 从指定 tag 构建 `linux/amd64` 镜像，先核对插件、服务端和 ta
 手动补发：
 
 ```bash
-gh workflow run publish-docker.yml --repo NightWatcher314/zotero-pdf2zh-next --ref main -f tag=v5.3.1
+gh workflow run publish-docker.yml --repo XuJinsheng/zotero-pdf2zh-next --ref main -f tag=v5.3.1
 ```
 
 ### Homebrew bottle 发布与瘦身

@@ -25,9 +25,7 @@ Before running, add a CHANGELOG.md section like:
   ## v5.1.1 - YYYY-MM-DD
 
 Unless --no-push or --no-tap is set, the script also updates the Homebrew tap
-formula after the main repo push/release succeeds. The default tap path is
-../homebrew-formula when present, then /Users/night/Documents/Codes/homebrew-formula
-when present.
+formula after the main repo push/release succeeds. Pass --tap-path for a tap you maintain, or --no-tap to skip that channel.
 
 PyPI publishing uses UV_PUBLISH_TOKEN when available. Otherwise the script
 dispatches the trusted-publishing workflow. Use --no-pypi to skip upload.
@@ -125,14 +123,6 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 PNPM=(npx --yes "$(node -p 'require("./plugin/package.json").packageManager')")
 
-if [[ -z "$TAP_PATH" ]]; then
-    if [[ -d "$REPO_ROOT/../homebrew-formula/.git" ]]; then
-        TAP_PATH="$REPO_ROOT/../homebrew-formula"
-    elif [[ -d "/Users/night/Documents/Codes/homebrew-formula/.git" ]]; then
-        TAP_PATH="/Users/night/Documents/Codes/homebrew-formula"
-    fi
-fi
-
 if [[ "$UPDATE_TAP" -eq 1 && "$PUSH" -eq 1 ]]; then
     [[ -n "$TAP_PATH" ]] || die "Homebrew tap path not found; use --tap-path <path> or --no-tap"
     [[ -d "$TAP_PATH/.git" ]] || die "Homebrew tap path is not a git repo: $TAP_PATH"
@@ -159,7 +149,7 @@ if [[ "$PUBLISH_DOCKER" -eq 1 ]]; then
 fi
 
 TAG="v$VERSION"
-GITHUB_REPO="NightWatcher314/zotero-pdf2zh-next"
+GITHUB_REPO="XuJinsheng/zotero-pdf2zh-next"
 if [[ "$PUBLISH_DOCKER" -eq 1 ]]; then
     DOCKER_IMAGE="$(gh variable get DOCKER_IMAGE --repo "$GITHUB_REPO")"
     [[ "$DOCKER_IMAGE" =~ ^[a-z0-9.-]+/[a-z0-9._/-]+$ ]] ||
@@ -276,12 +266,16 @@ uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$VERSION
 PYPI_SMOKE_ROOT="$(mktemp -d)"
 TEMP_PATHS+=("$PYPI_SMOKE_ROOT")
 UV_NO_CONFIG=1 uv venv --python 3.13 "$PYPI_SMOKE_ROOT/venv"
+PYPI_SMOKE_PYTHON="$PYPI_SMOKE_ROOT/venv/bin/python"
+if [[ -f "$PYPI_SMOKE_ROOT/venv/Scripts/python.exe" ]]; then
+    PYPI_SMOKE_PYTHON="$PYPI_SMOKE_ROOT/venv/Scripts/python.exe"
+fi
 env -u UV_INDEX_URL -u PIP_INDEX_URL \
     UV_NO_CONFIG=1 UV_DEFAULT_INDEX=https://pypi.org/simple \
     uv pip install \
-    --python "$PYPI_SMOKE_ROOT/venv/bin/python" \
+    --python "$PYPI_SMOKE_PYTHON" \
     "server/dist/zotero_pdf2zh_next-$VERSION-py3-none-any.whl"
-"$PYPI_SMOKE_ROOT/venv/bin/python" scripts/check_installed_runtime.py "$VERSION"
+"$PYPI_SMOKE_PYTHON" scripts/check_installed_runtime.py "$VERSION"
 
 CI=true "${PNPM[@]}" --dir plugin install --frozen-lockfile
 "${PNPM[@]}" --dir plugin lint:check
@@ -376,7 +370,7 @@ if [[ "$PUBLISH_RELEASE" -eq 1 ]]; then
     printf '%s\n\n' "$CHANGELOG_SECTION" >"$NOTES_FILE"
     cat >>"$NOTES_FILE" <<EOF
 Zotero automatic updates use the fixed release asset:
-https://github.com/NightWatcher314/zotero-pdf2zh-next/releases/download/release/update.json
+https://github.com/XuJinsheng/zotero-pdf2zh-next/releases/download/release/update.json
 EOF
 
     if [[ "$GITHUB_RELEASE_EXISTS" -eq 1 ]]; then
@@ -419,9 +413,11 @@ publish_homebrew() (
     # This publisher owns its temporary checkout, independently of the parent.
     TEMP_PATHS=()
     trap cleanup EXIT
-    TAP_REPO="NightWatcher314/homebrew-formula"
+    TAP_REPO="$(gh repo view "$(git -C "$TAP_PATH" remote get-url origin)" --json nameWithOwner --jq .nameWithOwner)"
     TAP_BRANCH="zotero-pdf2zh-next-$TAG"
     TAP_REMOTE="$(git -C "$TAP_PATH" remote get-url origin)"
+    BREW_TAP="${TAP_REPO%/*}/${TAP_REPO#*/homebrew-}"
+    BREW_TAP="$(printf '%s' "$BREW_TAP" | tr '[:upper:]' '[:lower:]')"
     TAP_TEMP_ROOT="$(mktemp -d)"
     TAP_WORKTREE="$TAP_TEMP_ROOT/tap"
     TEMP_PATHS+=("$TAP_TEMP_ROOT")
@@ -438,7 +434,7 @@ publish_homebrew() (
 
     FORMULA_REL="Formula/zotero-pdf2zh-next.rb"
     FORMULA="$TAP_WORKTREE/$FORMULA_REL"
-    TARBALL_URL="https://github.com/NightWatcher314/zotero-pdf2zh-next/archive/$COMMIT.tar.gz"
+    TARBALL_URL="https://github.com/XuJinsheng/zotero-pdf2zh-next/archive/$COMMIT.tar.gz"
     SHA256="$(curl -LfsS "$TARBALL_URL" | shasum -a 256 | awk '{print $1}')"
     [[ -n "$SHA256" ]] || die "failed to compute sha256 for $TARBALL_URL"
 
@@ -535,12 +531,12 @@ s/sha256 "[^"]+"/sha256 "$ENV{SHA256}"/;
         die "Homebrew formula does not contain an Apple Silicon bottle"
 
     if command -v brew >/dev/null 2>&1; then
-        BREW_TAP_PATH="$(brew --repository nightwatcher314/formula 2>/dev/null || true)"
+        BREW_TAP_PATH="$(brew --repository "$BREW_TAP" 2>/dev/null || true)"
         if [[ -n "$BREW_TAP_PATH" && -d "$BREW_TAP_PATH/.git" ]]; then
             git -C "$BREW_TAP_PATH" pull --ff-only
         fi
-        HOMEBREW_NO_AUTO_UPDATE=1 brew readall nightwatcher314/formula
-        HOMEBREW_NO_AUTO_UPDATE=1 brew install --formula --dry-run nightwatcher314/formula/zotero-pdf2zh-next
+        HOMEBREW_NO_AUTO_UPDATE=1 brew readall "$BREW_TAP"
+        HOMEBREW_NO_AUTO_UPDATE=1 brew install --formula --dry-run "$BREW_TAP/zotero-pdf2zh-next"
     else
         echo "Skipping Homebrew validation because brew is not installed" >&2
     fi
