@@ -5,6 +5,7 @@ export class PDF2zhBasicFactory {
         Zotero.PreferencePanes.register({
             pluginID: addon.data.config.addonID,
             src: rootURI + "content/preferences.xhtml",
+            defaultXUL: true,
             label: getString("prefs-title"),
             image: `chrome://${addon.data.config.addonRef}/content/icons/favicon.svg`,
         });
