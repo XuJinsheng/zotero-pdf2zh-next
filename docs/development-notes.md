@@ -20,11 +20,7 @@ uv run --directory server python -m unittest discover -s tests
 uv run --directory server zotero-pdf2zh-next
 ```
 
-`server/uv.lock` 是跨机器和 GitHub Actions 共用的可复现输入，registry 必须保持为公共 `https://pypi.org/simple`，不能提交 Host 本地镜像地址。需要重建 lock 时显式使用：
-
-```bash
-UV_DEFAULT_INDEX=https://pypi.org/simple uv --directory server lock
-```
+服务端依赖按 `server/pyproject.toml` 解析，不提交 `server/uv.lock`。本地、Docker、CI 和发布流程使用同一依赖声明。
 
 面向用户的服务端分发优先使用 `uv tool`，命令名和插件名保持一致：
 
@@ -53,7 +49,7 @@ PyPI 解析到未验证的新版本，也避免安装上游 Gradio/FastAPI 前�
 uv run python scripts/vendor_pdf2zh_runtime.py
 ```
 
-生成目录和许可证必须提交。生成后重建 `server/uv.lock`，再跑 wheel/sdist
+生成目录和许可证必须提交。生成后核对 `server/pyproject.toml`，再跑 wheel/sdist
 检查和 fresh-wheel 安装 smoke；不能只改版本字符串。
 
 新增翻译选项时，通常要同时检查这些位置：
@@ -104,9 +100,9 @@ uv run python scripts/vendor_pdf2zh_runtime.py
 ```bash
 pnpm --dir plugin install --frozen-lockfile
 pnpm --dir plugin lint:check
+pnpm --dir plugin test
 pnpm --dir plugin build
-UV_DEFAULT_INDEX="$(awk -F '"' '/^source = \{ registry = / { print $2; exit }' server/uv.lock)" \
-  uv run --directory server --locked python -m unittest discover -s tests
+uv run --directory server python -m unittest discover -s tests
 git diff --check
 ```
 
@@ -118,9 +114,15 @@ pnpm --dir plugin exec eslint src/modules/preferenceScript.ts
 
 只改服务端请求解析或 `pdf2zh_next` 参数映射时，优先补小范围 unittest。不要为了验证翻译流程去依赖真实 LLM 调用；真实调用慢、贵、也不稳定。
 
+## 持续集成（CI）
+
+[CI 工作流](../.github/workflows/ci.yml) 在推送 `main`、向 `main` 提交或更新 PR 时运行，也支持手动触发。插件 lint、构建与服务端测试、打包校验通过后，执行 Docker 构建。
+
+插件构建产物可在 `Artifacts` 中下载，保留 30 天。仅 `main` 分支发布开发镜像（`main`、`sha-<完整提交 SHA>`）；其他分支和 PR 只验证构建。正式版标签和 `latest` 由发布流程维护。
+
 ## 发布与 changelog
 
-发版前先写 `CHANGELOG.md`。发布脚本会检查是否存在对应版本章节：
+开发期间在 `CHANGELOG.md` 标记“未发布”，发版前填写实际发布日期。发布脚本会检查是否存在对应版本章节：
 
 ```markdown
 ## v5.2.3 - YYYY-MM-DD
@@ -136,8 +138,8 @@ scripts/release.sh 5.2.3
 
 脚本会做这些事：
 
-- 同步 `plugin/package.json`、`server/pyproject.toml`、`server/server.py` 和 `server/uv.lock` 版本。
-- 跑服务端测试和插件构建。
+- 同步 `plugin/package.json`、`server/pyproject.toml`、`server/server.py` 和 README 版本。
+- 跑服务端与插件测试、插件构建。
 - 构建服务端 Python wheel/sdist，确保 PyPI 包可发布。
 - 创建主仓库 release commit 并推送。
 - 使用本地 token 或 GitHub Trusted Publisher 发布服务端包到 PyPI。

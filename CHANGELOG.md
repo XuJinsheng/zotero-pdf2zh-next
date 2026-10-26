@@ -7,6 +7,7 @@
 - OpenAI 使用 Responses 接口，OpenAI Compatible 保留 Chat Completions 接口。
 - 两种服务新增默认关闭的流式请求开关，支持配置保存、最终译文读取及断流重试。
 - 修复父条目查询结果的类型检查错误，恢复插件正常构建。
+- Docker 构建移除外部 Dockerfile 解析器声明，避免因访问 Docker Hub 超时导致构建失败；删除仓库中的 `uv.lock`，Docker、CI 和发布流程改为按 `pyproject.toml` 解析依赖。
 - 将 `bitstring` 依赖限制为 `>=4.3.0,<5`，避免安装已移除 `BitStream` 的 5.x 版本导致服务启动失败。
 
 ## v5.4.0 - 2026-09-19

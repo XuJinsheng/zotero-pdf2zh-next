@@ -12,6 +12,7 @@ plugin/node_modules/
 plugin/build/
 
 server/.venv/
+server/uv.lock
 server/.pytest_cache/
 server/.mypy_cache/
 server/.coverage

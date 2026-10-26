@@ -71,7 +71,6 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - The server is also published to PyPI as `zotero-pdf2zh-next`; `scripts/release.sh <version>` is the unified release path for XPI, PyPI, and Homebrew unless an explicit `--no-*` flag is used.
 - When changing server packaging or startup behavior, also review:
   - `server/pyproject.toml`
-  - `server/uv.lock`
   - `server/Dockerfile`
   - `compose.yaml`
   - the Homebrew tap repo `NightWatcher314/homebrew-formula`, formula `Formula/zotero-pdf2zh-next.rb`

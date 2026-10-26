@@ -267,19 +267,9 @@ replaceExactlyOnce(
   `$1${version}$2`,
   "README release-version",
 );
-replaceExactlyOnce(
-  "server/uv.lock",
-  /(\[\[package\]\]\nname = "zotero-pdf2zh-next"\nversion = ")[^"]+(")/g,
-  `$1${version}$2`,
-  "server lock version",
-);
 ' "$VERSION"
 
-UV_LOCK_INDEX="$(awk -F '"' '/^source = \{ registry = / { print $2; exit }' server/uv.lock)"
-[[ -n "$UV_LOCK_INDEX" ]] || die "server/uv.lock does not contain a registry source"
-UV_DEFAULT_INDEX="$UV_LOCK_INDEX" uv --directory server lock --locked
-UV_DEFAULT_INDEX="$UV_LOCK_INDEX" \
-    uv run --directory server --locked python -m unittest discover -s tests
+uv run --directory server python -m unittest discover -s tests
 uv build server --out-dir server/dist --clear --no-sources
 uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$VERSION"
 
@@ -295,6 +285,7 @@ env -u UV_INDEX_URL -u PIP_INDEX_URL \
 
 CI=true "${PNPM[@]}" --dir plugin install --frozen-lockfile
 "${PNPM[@]}" --dir plugin lint:check
+"${PNPM[@]}" --dir plugin test
 "${PNPM[@]}" --dir plugin build
 
 node -e '
@@ -311,7 +302,7 @@ if (!addon || addon.updates[0].version !== version) {
 }
 ' "$VERSION"
 
-git add README.md plugin/package.json server/pyproject.toml server/server.py server/uv.lock
+git add README.md plugin/package.json server/pyproject.toml server/server.py
 if ! git diff --cached --quiet; then
     git commit -m "chore: release $TAG"
 fi

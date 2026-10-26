@@ -44,6 +44,8 @@
 5. 选择下载的 `.xpi` 文件。
 6. 重启 Zotero。
 
+开发版 XPI 可在 [CI 工作流](https://github.com/NightWatcher314/zotero-pdf2zh-next/actions/workflows/ci.yml)运行详情页的 `Artifacts` 中下载，解压后安装 `.xpi` 文件。
+
 ## 安装并启动本地服务
 
 macOS 推荐使用 Homebrew，这样可以用 `brew services` 管理后台服务：
@@ -62,6 +64,8 @@ zotero-pdf2zh-next
 ```
 
 Docker 预构建镜像发布在 [GHCR](https://github.com/NightWatcher314/zotero-pdf2zh-next/pkgs/container/zotero-pdf2zh-next)，目前支持 `linux/amd64`，提供版本 tag 和 `latest`。已有 Dockge/Compose 部署可替换镜像地址，保留原有端口与数据挂载；生产部署建议固定镜像 digest。
+
+开发版镜像使用同一地址的 `main` 或 `sha-<完整提交 SHA>` 标签，由 CI 在 `main` 分支检查通过后发布。
 
 也可以从源码构建并启动 Docker 服务：
 
