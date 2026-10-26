@@ -25,19 +25,11 @@ uv run --directory server zotero-pdf2zh-next
 面向用户的服务端分发优先使用 `uv tool`，命令名和插件名保持一致：
 
 ```bash
-uv tool install --python 3.13 zotero-pdf2zh-next
+uv tool install --python 3.13 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@v5.5.0#subdirectory=server"
 zotero-pdf2zh-next
 ```
 
-服务端 Python 包发布到 PyPI，包名也是 `zotero-pdf2zh-next`。PyPI 发布由统一发版脚本执行；默认通过 GitHub Trusted Publisher，无需仓库 secret。也可以由 direnv 注入 token，token 不写进仓库：
-
-```bash
-# .envrc
-export UV_PUBLISH_TOKEN="pypi-..."
-
-direnv allow
-scripts/release.sh 5.2.4
-```
+本分支服务端通过 Git 源码安装；现有 PyPI 包属于上游分发。当前本分支发布使用 `scripts/release.sh 5.5.0 --no-pypi --no-tap`。取得发布权限后，可通过统一发版脚本和 GitHub Trusted Publisher 发布，也可以由 direnv 注入 token；token 不写进仓库。
 
 服务端入口在 `server/server.py`，真正把插件参数转换为 `pdf2zh_next` 参数的是 `server/pdf2zh_next_service.py`。
 
@@ -141,18 +133,17 @@ pnpm --dir plugin exec eslint src/modules/preferenceScript.ts
 然后运行：
 
 ```bash
-scripts/release.sh 5.2.3
+scripts/release.sh 5.5.0 --no-pypi --no-tap
 ```
 
-脚本会做这些事：
+按上述命令发布本分支时，脚本会做这些事：
 
 - 同步 `plugin/package.json`、`server/pyproject.toml`、`server/server.py` 和 README 版本。
 - 跑服务端与插件测试、插件构建。
 - 构建服务端 Python wheel/sdist，确保 PyPI 包可发布。
 - 创建主仓库 release commit 并推送。
-- 使用本地 token 或 GitHub Trusted Publisher 发布服务端包到 PyPI。
-- 确认 PyPI 已可查询该版本后，用 `CHANGELOG.md` 对应章节生成 GitHub Release notes。
-- 上传 Zotero `.xpi`，并行发布 Docker 与 Homebrew bottle。
+- 用 `CHANGELOG.md` 对应章节生成 GitHub Release notes。
+- 上传 Zotero `.xpi`，发布 Docker 镜像；跳过 PyPI 和 Homebrew。
 - 等待所有启用渠道完成；任一失败时返回失败，不改自动更新清单。
 - 全部启用渠道成功后，最后更新固定 `release/update.json`。
 
@@ -160,11 +151,13 @@ scripts/release.sh 5.2.3
 
 `.github/workflows/publish-pypi.yml` 只接受手动指定的现有 tag，并从该 tag 构建。`scripts/release.sh` 在没有 `UV_PUBLISH_TOKEN` 时负责创建/校验 tag、触发该 workflow、等待 PyPI 可查询；不要直接从 `main` 构建旧版本。
 
-PyPI Trusted Publisher 的绑定必须保持为：owner `NightWatcher314`、repository `zotero-pdf2zh-next`、workflow `publish-pypi.yml`、environment `pypi`。GitHub `pypi` environment 不保存 token；`id-token: write` 只授予发布 job。
+本分支维护者为 `XuJinsheng`，发布目标为 `XuJinsheng/zotero-pdf2zh-next`。PyPI 包名属于上游既有分发；取得该包发布权限后，才可配置 owner `XuJinsheng`、repository `zotero-pdf2zh-next`、workflow `publish-pypi.yml`、environment `pypi` 的 Trusted Publisher。未配置时使用 `--no-pypi`，不能将上游已存在的同号版本视为本分支发布成功。GitHub `pypi` environment 不保存 token；`id-token: write` 只授予发布 job。
 
 同一次 release commit 的 GitHub Release 或 PyPI 其中一端已存在时，脚本会校验 tag/commit 和 PyPI wheel/sdist 后补齐缺失步骤。旧版本 backfill 必须从对应 tag 构建，不能从已前进的 `main` 直接重发。不要恢复单独的 tag 发布 workflow；`scripts/release.sh` 是唯一发版入口。
 
-如果临时不想上传 PyPI，可以传 `--no-pypi`；默认稳定版发版会同时发布 XPI、PyPI、Docker 和 Homebrew。
+脚本默认启用 XPI、PyPI、Docker 和 Homebrew；本分支须显式传入 `--no-pypi --no-tap`，取得对应渠道权限后再启用。
+
+本分支不默认使用上游 Homebrew tap；发布时传入自己维护的 `--tap-path`，未建立 tap 时使用 `--no-tap`。历史验收记录中的 NightWatcher314 链接保留为上游记录。
 
 Homebrew formula 必须继续 pin `python@3.13`。目前 `pdf2zh_next -> pydantic-core` 依赖链在 Python 3.14 上不应被假定可用。
 
@@ -176,13 +169,13 @@ Homebrew formula 必须继续 pin `python@3.13`。目前 `pdf2zh_next -> pydanti
 
 `.github/workflows/publish-docker.yml` 由 `scripts/release.sh` 在 GitHub Release 创建后触发并等待；也支持手动补发已有稳定版 tag。`--no-docker` 跳过镜像发布，`--no-push` / `--no-release` 同时跳过；预发布版本需使用 `--no-docker`。不会自动更新 NAS stack。
 
-当前发布仓库为 `ghcr.io/nightwatcher314/zotero-pdf2zh-next`，通过仓库变量 `DOCKER_IMAGE` 配置；认证使用内置 `GITHUB_TOKEN`，不保存额外 registry secret。
+当前分支镜像仓库为 `ghcr.io/xujinsheng/zotero-pdf2zh-next`，通过仓库变量 `DOCKER_IMAGE` 配置；认证使用内置 `GITHUB_TOKEN`，不保存额外 registry secret。
 
 2026-09-11 首次发布验收：[CI #34587406079](https://github.com/NightWatcher314/zotero-pdf2zh-next/actions/runs/34587406079) 成功；v5.3.1 的 OCR 初始化、运行版本和 HTTP 健康检查通过。包为 Public，匿名读取 manifest/config 成功；`5.3.1` 与 `latest` 均指向 `sha256:19e73ca31b631d1552f6719e281838934ab48d836a1cc1d8d0f69ea4c1b0ec07`（`linux/amd64`），源码 revision 为 `8beaab118cc90eca67e17f30ca3c795f7986552c`。此次仅发布镜像，未更新 NAS 的 Dockge stack。
 
 仓库 Actions 配置：
 
-- Variable `DOCKER_IMAGE`：完整且小写的镜像仓库路径，不含 tag。例如 `ghcr.io/nightwatcher314/zotero-pdf2zh-next` 或 `docker.io/<username>/zotero-pdf2zh-next`；Harbor 使用实际 registry/项目路径。
+- Variable `DOCKER_IMAGE`：完整且小写的镜像仓库路径，不含 tag。例如 `ghcr.io/xujinsheng/zotero-pdf2zh-next` 或 `docker.io/<username>/zotero-pdf2zh-next`；Harbor 使用实际 registry/项目路径。
 - GHCR 使用内置 `GITHUB_TOKEN` 和 `packages: write`，无需另交凭据。首次发布后核验包可见性；面向匿名用户分发时设为 public。
 - Docker Hub / Harbor 使用 Secrets `DOCKER_USERNAME` 和 `DOCKER_TOKEN`。Docker Hub 用有 push 权限的访问令牌，Harbor 用限定项目的 robot；不要使用账号密码或 OIDC 个人 secret，不要把令牌写进仓库或聊天。
 
@@ -191,10 +184,10 @@ CI 从指定 tag 构建 `linux/amd64` 镜像，先核对插件、服务端和 ta
 手动补发：
 
 ```bash
-gh workflow run publish-docker.yml --repo NightWatcher314/zotero-pdf2zh-next --ref main -f tag=v5.3.1
+gh workflow run publish-docker.yml --repo XuJinsheng/zotero-pdf2zh-next --ref main -f tag=v5.5.0
 ```
 
-### Homebrew bottle 发布与瘦身
+### 上游 Homebrew bottle 发布与瘦身记录
 
 Formula 的源码回退路径必须忽略用户或 Host 的 uv/pip 镜像配置，并显式使用公共 PyPI。否则 bottle 覆盖范围之外的机器仍可能被锁到私有镜像。
 
@@ -227,7 +220,7 @@ README 保持给使用者看的内容：
 服务接口、请求体、内部任务结构、发布脚本细节都放到 `docs/` 或源码附近，不放 README。
 
 
-## v5.4.0 发布验收（2026-09-19）
+## 上游 v5.4.0 发布验收（2026-09-19）
 
 - 源码与 tag：`878ab2c116297aaa3512793b1b67acacd689aa9d`；[Release](https://github.com/NightWatcher314/zotero-pdf2zh-next/releases/tag/v5.4.0) 已发布 XPI，固定更新清单版本及 SHA-512 与产物一致。
 - 本次加入请求重试及每 API 配置的运行参数覆盖。默认继承保持兼容；初始化连接探测与 BabelDOC 段落回退仍有独立请求行为。

@@ -14,6 +14,7 @@
 - [安装并启动本地服务](#安装并启动本地服务)
 - [更新](#更新)
 - [在 Zotero 里使用](#在-zotero-里使用)
+- [作者与上游致谢](#作者与上游致谢)
 - [License](#license)
 
 ## 和原项目的区别
@@ -21,7 +22,7 @@
 本项目基于 `guaguastandup/zotero-pdf2zh` 演化而来，但现在按更轻量的方向维护：
 
 - 只保留 Zotero 插件和本地 Python 服务两部分。
-- 服务端提供 Homebrew 和 `uv tool` 分发，尽量减少手动配置。
+- 服务端支持通过 `uv tool` 从本分支源码安装，也可使用 Docker 部署。
 - 支持任务面板、进度显示、取消、重试和结果导入状态。
 - 支持同时输出中文 PDF 和双语 PDF。
 - 偏好页整合插件版本、服务端版本、连接检查和常用翻译选项。
@@ -35,7 +36,7 @@
 
 ## 安装插件
 
-从 GitHub Release 下载最新的 `zotero-pdf2zh-next.xpi`，然后：
+从 [GitHub Releases](https://github.com/XuJinsheng/zotero-pdf2zh-next/releases) 下载最新的 `zotero-pdf2zh-next.xpi`，然后：
 
 1. 打开 Zotero。
 2. 进入 `工具 -> 插件`。
@@ -44,26 +45,18 @@
 5. 选择下载的 `.xpi` 文件。
 6. 重启 Zotero。
 
-开发版 XPI 可在 [CI 工作流](https://github.com/NightWatcher314/zotero-pdf2zh-next/actions/workflows/ci.yml)运行详情页的 `Artifacts` 中下载，解压后安装 `.xpi` 文件。
+开发版 XPI 可在 [CI 工作流](https://github.com/XuJinsheng/zotero-pdf2zh-next/actions/workflows/ci.yml)运行详情页的 `Artifacts` 中下载，解压后安装 `.xpi` 文件。
 
 ## 安装并启动本地服务
 
-macOS 推荐使用 Homebrew，这样可以用 `brew services` 管理后台服务：
+安装本分支的 5.5.0 服务端（需要 Git 和 uv）：
 
 ```bash
-brew tap NightWatcher314/homebrew-formula
-brew install zotero-pdf2zh-next
-brew services start zotero-pdf2zh-next
-```
-
-Windows 和 Linux 可以使用 `uv tool`：
-
-```bash
-uv tool install --python 3.13 zotero-pdf2zh-next
+uv tool install --python 3.13 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@v5.5.0#subdirectory=server"
 zotero-pdf2zh-next
 ```
 
-Docker 预构建镜像发布在 [GHCR](https://github.com/NightWatcher314/zotero-pdf2zh-next/pkgs/container/zotero-pdf2zh-next)，目前支持 `linux/amd64`，提供版本 tag 和 `latest`。已有 Dockge/Compose 部署可替换镜像地址，保留原有端口与数据挂载；生产部署建议固定镜像 digest。
+Docker 预构建镜像发布在 [GHCR](https://github.com/XuJinsheng/zotero-pdf2zh-next/pkgs/container/zotero-pdf2zh-next)，目前支持 `linux/amd64`，提供版本 tag 和 `latest`。已有 Dockge/Compose 部署可替换镜像地址，保留原有端口与数据挂载；生产部署建议固定镜像 digest。
 
 开发版镜像使用同一地址的 `main` 或 `sha-<完整提交 SHA>` 标签，由 CI 在 `main` 分支检查通过后发布。
 
@@ -91,23 +84,13 @@ http://127.0.0.1:8890
 
 插件更新：
 
-- Zotero 10 用户：v5.3.1 已提供兼容性更新。若显示“不兼容”，在插件管理页检查更新后重启 Zotero；插件版本仍为 5.3.1，服务端无需升级。
-
 - 在 Zotero 的插件管理页面直接检查更新。
 - 按 Zotero 提示完成更新并重启。
-
-Homebrew 服务端更新：
-
-```bash
-brew update
-brew upgrade zotero-pdf2zh-next
-brew services restart zotero-pdf2zh-next
-```
 
 `uv tool` 服务端更新：
 
 ```bash
-uv tool upgrade zotero-pdf2zh-next
+uv tool install --reinstall --python 3.13 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@v5.5.0#subdirectory=server"
 ```
 
 ## 在 Zotero 里使用
@@ -130,6 +113,14 @@ uv tool upgrade zotero-pdf2zh-next
 - 自定义策略目前支持底层使用 OpenAI Python SDK 的翻译引擎，覆盖超时、连接错误、HTTP 408/409/429 和 5xx。其他引擎应保留 `-1`；自定义设置会报错，不会静默忽略。
 - 策略作用于片段翻译及术语提取，并关闭 SDK 内层重试，避免次数叠加。上游初始化连接探测仍使用原有策略；BabelDOC 段落回退可另行发起请求，因此这里不是整段或整篇的请求总上限。
 - 设置随新提交任务保存；任务面板重试已有任务沿用其原参数。插件和服务端均需包含此功能，旧服务端不会应用这些字段。
+
+## 作者与上游致谢
+
+当前分支由 [XuJinsheng](https://github.com/XuJinsheng) 维护，发布仓库为 [XuJinsheng/zotero-pdf2zh-next](https://github.com/XuJinsheng/zotero-pdf2zh-next)。
+
+本项目基于 [NightWatcher314/zotero-pdf2zh-next](https://github.com/NightWatcher314/zotero-pdf2zh-next)，其前身为 [guaguastandup/zotero-pdf2zh](https://github.com/guaguastandup/zotero-pdf2zh)。感谢原作者及贡献者。
+
+翻译、PDF 处理和 OCR 核心来自 [PDFMathTranslate-next](https://github.com/PDFMathTranslate-next/PDFMathTranslate-next)、[BabelDOC](https://github.com/funstory-ai/BabelDOC) 和 [RapidOCR](https://github.com/RapidAI/RapidOCR)。内置快照版本、来源哈希和许可证见 [第三方声明](server/THIRD_PARTY_NOTICES.md)。引用这些上游项目时，请遵循各项目提供的引用信息。
 
 ## License
 

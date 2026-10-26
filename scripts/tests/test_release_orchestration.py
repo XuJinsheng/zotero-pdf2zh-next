@@ -1,11 +1,13 @@
 """Exercise release.sh's actual orchestration with offline publisher substitutes."""
 from pathlib import Path
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
 
 SCRIPT = Path(__file__).resolve().parents[1] / "release.sh"
+BASH = shutil.which("bash") or "bash"
 ORCHESTRATION = SCRIPT.read_text().split(
     "# Run independent publishers concurrently; promote automatic updates only on success.\n",
     1,
@@ -72,7 +74,7 @@ class ReleaseOrchestrationTests(unittest.TestCase):
                 **overrides,
             }
             result = subprocess.run(
-                ["bash", "-c", PRELUDE + ORCHESTRATION],
+                [BASH, "-c", PRELUDE + ORCHESTRATION],
                 env=env, capture_output=True, text=True, timeout=5,
             )
             return result, events.read_text().splitlines()
@@ -159,7 +161,7 @@ gh() {
 }
 '''
                 result = subprocess.run(
-                    ["bash", "-c", mock + gate + '\necho publish >> "$EVENTS"'],
+                    [BASH, "-c", mock + gate + '\necho publish >> "$EVENTS"'],
                     env=env, capture_output=True, text=True, timeout=5,
                 )
                 if fail == "1":
