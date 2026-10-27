@@ -70,6 +70,8 @@ jobs:
 
             - name: Setup uv
               uses: astral-sh/setup-uv@v8.3.2
+              with:
+                  python-version: "3.14"
 
             - name: Test release orchestration
               run: uv run --no-project python -m unittest discover -s scripts/tests -v
@@ -131,6 +133,19 @@ jobs:
                   context: .
                   file: server/Dockerfile
                   platforms: linux/amd64
+                  load: true
                   push: ${{ github.ref == 'refs/heads/main' }}
                   tags: ${{ steps.metadata.outputs.tags }}
                   labels: ${{ steps.metadata.outputs.labels }}
+                  cache-from: type=gha,scope=pdf2zh-server
+                  cache-to: type=gha,mode=max,scope=pdf2zh-server
+
+            - name: Verify image runtime
+              env:
+                  IMAGE: ${{ steps.image.outputs.name }}:sha-${{ github.sha }}
+              run: |
+                  set -euo pipefail
+                  VERSION="$(python3 -c 'import tomllib; print(tomllib.load(open("server/pyproject.toml", "rb"))["project"]["version"])')"
+                  docker run --rm -i --entrypoint python "$IMAGE" \
+                    - "$VERSION" < scripts/check_installed_runtime.py
+                  docker image inspect "$IMAGE" --format 'Image size: {{.Size}} bytes'

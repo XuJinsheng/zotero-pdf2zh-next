@@ -4,7 +4,7 @@
 
 项目维护重点是：少一点配置负担，稳定地在 Zotero 里提交任务、查看进度、导入结果。
 
-当前源码版本：<!-- release-version --> `5.6.0`，发布状态见 [更新记录](CHANGELOG.md)。
+当前源码版本：<!-- release-version --> `5.6.1`，发布状态见 [更新记录](CHANGELOG.md)。
 
 ## 目录
 
@@ -49,10 +49,10 @@
 
 ## 安装并启动本地服务
 
-安装本分支的 5.6.0 服务端（需要 Git 和 uv）：
+安装当前开发分支的服务端（仅支持 Python 3.14，需要 Git 和 uv）：
 
 ```bash
-uv tool install --python 3.13 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@v5.6.0#subdirectory=server"
+uv tool install --python 3.14 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@main#subdirectory=server"
 zotero-pdf2zh-next
 ```
 
@@ -90,7 +90,7 @@ http://127.0.0.1:8890
 `uv tool` 服务端更新：
 
 ```bash
-uv tool install --reinstall --python 3.13 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@v5.6.0#subdirectory=server"
+uv tool install --reinstall --python 3.14 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@main#subdirectory=server"
 ```
 
 ## 在 Zotero 里使用

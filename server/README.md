@@ -2,10 +2,10 @@
 
 Local Python server for the Zotero `zotero-pdf2zh-next` plugin.
 
-Install this branch's server with Git and uv:
+Install the current development branch with Git and uv (Python 3.14 only):
 
 ```bash
-uv tool install --python 3.13 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@v5.5.0#subdirectory=server"
+uv tool install --python 3.14 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@main#subdirectory=server"
 zotero-pdf2zh-next
 ```
 

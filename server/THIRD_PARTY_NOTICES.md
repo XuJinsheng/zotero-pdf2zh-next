@@ -15,6 +15,11 @@ included. Translation providers, PDF processing, OCR models, table handling,
 and glossary extraction remain included. Exact license texts are under
 `LICENSES/` and are copied into wheel metadata.
 
+Local changes: BabelDOC uses CPython 3.14's ThreadPoolExecutor with a priority
+queue adapter and `compression.zstd` instead of `pyzstd`. Preserve both changes
+when regenerating snapshots; thread pool tests are in
+`tests/test_priority_thread_pool_executor.py`.
+
 Regenerate snapshots from the pinned public URLs and hashes:
 
 ```bash

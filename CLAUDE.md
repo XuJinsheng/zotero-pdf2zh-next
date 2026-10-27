@@ -74,6 +74,6 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - `server/Dockerfile`
   - `compose.yaml`
   - the Homebrew tap repo `NightWatcher314/homebrew-formula`, formula `Formula/zotero-pdf2zh-next.rb`
-- The Homebrew formula should stay aligned with the server CLI entrypoint and currently must pin `python@3.13` instead of unversioned `python`, because the `pdf2zh_next -> pydantic-core` dependency chain does not currently build correctly on Python 3.14.
+- All install targets require Python 3.14 (`>=3.14,<3.15`); do not add older Python compatibility. The priority thread pool reuses CPython 3.14's workers and shutdown. The upstream Homebrew tap pins incompatible `python@3.13`; a maintained tap must use `python@3.14`, update interpreter paths, and rebuild/test bottles on macOS and Linux.
 - This fork is maintained by XuJinsheng and releases to `XuJinsheng/zotero-pdf2zh-next`. The NightWatcher314 Homebrew tap and existing PyPI distribution are upstream channels; use `--no-tap --no-pypi` until this fork has explicitly configured publishing rights. For a maintained tap, pass its checkout with `--tap-path`.
 - Do not update only one distribution target if the change affects all startup/install paths.

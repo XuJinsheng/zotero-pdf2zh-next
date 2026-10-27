@@ -19,6 +19,8 @@ FORBIDDEN_DISTRIBUTIONS = {
     "pandas",
     "pdf2zh-next",
     "pydantic-settings",
+    "pyzstd",
+    "backports-zstd",
     "rapidocr-onnxruntime",
     "ruff",
     "sse-starlette",

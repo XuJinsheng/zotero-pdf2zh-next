@@ -22,10 +22,18 @@ uv run --directory server zotero-pdf2zh-next
 
 服务端依赖按 `server/pyproject.toml` 解析，不提交 `server/uv.lock`。本地、Docker、CI 和发布流程使用同一依赖声明。
 
+服务端仅支持 Python 3.14（`>=3.14,<3.15`），本地、Docker、CI 和发布校验保持一致。旧 tag（包括 v5.6.0）要求 `<3.14`，当前安装示例因此指向 `main`。
+
+内置 BabelDOC 的线程池通过优先队列复用 CPython 3.14 的 `ThreadPoolExecutor`，优先级数值越小越先执行，同优先级（含默认值）按提交顺序执行。Zstandard 使用标准库 `compression.zstd`，不再依赖 `pyzstd`。
+
+2026-10-27 验证：Windows 和 Linux Docker 各 69 项服务端测试、wheel/sdist 校验、安装后 OCR 及 HTTP `/health` 通过；未验证 macOS/Homebrew bottle。
+
+同日 Python 3.15 的 Linux x86_64 纯 wheel 依赖解析因缺少 ONNX Runtime `cp315` wheel 失败，暂保留 `<3.15`；兼容包发布后重验依赖安装、OCR 和服务端测试。
+
 面向用户的服务端分发优先使用 `uv tool`，命令名和插件名保持一致：
 
 ```bash
-uv tool install --python 3.13 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@v5.6.0#subdirectory=server"
+uv tool install --python 3.14 "git+https://github.com/XuJinsheng/zotero-pdf2zh-next.git@main#subdirectory=server"
 zotero-pdf2zh-next
 ```
 
@@ -41,7 +49,7 @@ PyPI 解析到未验证的新版本，也避免安装上游 Gradio/FastAPI 前�
 uv run python scripts/vendor_pdf2zh_runtime.py
 ```
 
-生成目录和许可证必须提交。生成后核对 `server/pyproject.toml`，再跑 wheel/sdist
+生成目录和许可证必须提交。生成后保留 `server/THIRD_PARTY_NOTICES.md` 中记录的本地 BabelDOC 线程池与 zstd 改动，核对 `server/pyproject.toml`，再跑 wheel/sdist
 检查和 fresh-wheel 安装 smoke；不能只改版本字符串。
 
 新增翻译选项时，通常要同时检查这些位置：
@@ -127,7 +135,7 @@ pnpm --dir plugin exec eslint src/modules/preferenceScript.ts
 - Zotero 的 EPUB/PDF 类型包作为直接开发依赖固定提交；定向移除重复 Git 子依赖，保留 pnpm 默认安全检查和发布冷却期。仅允许 SWC、esbuild 安装脚本。配置见 `plugin/pnpm-workspace.yaml`。
 - toolkit 6 删除菜单接口，改用 `UITool.createElement`；TypeScript 保持 6.0，因 [typescript-eslint 要求 `<6.1`](https://typescript-eslint.io/users/dependency-versions/)。
 - 清理无用直接依赖，补齐 `azure-core`、`regex`，提升服务端最低依赖版本。PyMuPDF 升至 2.0，附带 Layout/4LLM，安装体积增加。
-- Azure SDK 保持 `<2`：[2.0 改用新版 HTTP 协议](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/translation/azure-ai-translation-text/CHANGELOG.md)，现有中国区 v3 端点尚未验证新版协议。内置运行时快照及 Python 3.12/3.13 范围保持不变。
+- Azure SDK 保持 `<2`：[2.0 改用新版 HTTP 协议](https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/translation/azure-ai-translation-text/CHANGELOG.md)，现有中国区 v3 端点尚未验证新版协议。内置运行时版本保持不变；Python 仅支持 3.14。
 
 ## 发布与 changelog
 
@@ -168,13 +176,19 @@ scripts/release.sh 5.6.0 --no-pypi --no-tap
 
 本分支不默认使用上游 Homebrew tap；发布时传入自己维护的 `--tap-path`，未建立 tap 时使用 `--no-tap`。历史验收记录中的 NightWatcher314 链接保留为上游记录。
 
-Homebrew formula 必须继续 pin `python@3.13`。目前 `pdf2zh_next -> pydantic-core` 依赖链在 Python 3.14 上不应被假定可用。
+上游 Homebrew formula 仍 pin `python@3.13`，不能安装当前分支；本分支不维护该 tap。自有 tap 必须改为 `python@3.14`，同时更新安装解释器路径并在 macOS/Linux 上重新验证 bottle，不能直接复用 3.13 bottle。
 
 发布脚本的 Docker 与 Homebrew 任务独立运行、统一等待并汇总失败。某渠道失败后，已完成渠道的版本资产保留，自动更新清单保持原版本；修复失败渠道后可从同一发布提交重新执行同版本发布。显式 `--no-docker` / `--no-tap` 排除的渠道不参与完成门槛。脚本内部并行不代表允许多个版本同时覆盖稳定更新清单，应保持单个发布操作。
 
 离线编排测试：`uv run --no-project python -m unittest discover -s scripts/tests -v`。测试替代外部发布命令，验证并行启动、单/双渠道失败、等待完成、清单后置及跳过渠道；不会推送或上传任何产物。CI 同时运行这些测试。Homebrew 发布门槛按当前 PR head SHA 定位并等待整个 `tests.yml` run，再核对 PR checks，避免动态矩阵任务尚未登记时提前放行。
 
 ### Docker 镜像 CI
+
+Docker 多阶段构建仅在 builder 使用 uv，runtime 保留 Python、虚拟环境和源码，直接启动 `zotero-pdf2zh-next`。安装路径保持 `/app/server`，兼容现有 `translates` 挂载；不编译字节码或安装 GL/X11 库。镜像内调试使用 `python`。
+
+普通 CI 与发布构建共用 `pdf2zh-server` 缓存；普通 CI 加载镜像运行 `scripts/check_installed_runtime.py` 验证依赖、模型和 OCR，并输出镜像大小。
+
+2026-10-27 本地同依赖对比（linux/amd64）：镜像从 1.86 GB 降至 1.31 GB（约 29.4%），OCR、`/health` 和 `translates` 挂载检查通过。体积随基础镜像与依赖更新变化。
 
 `.github/workflows/publish-docker.yml` 由 `scripts/release.sh` 在 GitHub Release 创建后触发并等待；也支持手动补发已有稳定版 tag。`--no-docker` 跳过镜像发布，`--no-push` / `--no-release` 同时跳过；预发布版本需使用 `--no-docker`。不会自动更新 NAS stack。
 

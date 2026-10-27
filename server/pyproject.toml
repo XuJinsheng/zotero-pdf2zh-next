@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "zotero-pdf2zh-next"
-version = "5.6.0"
+version = "5.6.1"
 description = "Local PDF translation server for the Zotero zotero-pdf2zh-next plugin"
 authors = [{name = "XuJinsheng"}]
 readme = "README.md"
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.14,<3.15"
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSES/*.txt", "THIRD_PARTY_NOTICES.md"]
 dependencies = [
@@ -42,7 +42,6 @@ dependencies = [
     "pymupdf>=2.0,<3",
     "pypdf>=6.21.2,<7",
     "pyyaml>=6.0.3",
-    "pyzstd>=0.20.0",
     "requests>=2.34.2",
     "regex>=2026.9.29",
     "rich>=15.0.0",

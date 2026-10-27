@@ -265,7 +265,7 @@ uv run --no-project python scripts/check_pypi_artifacts.py server/dist "$VERSION
 
 PYPI_SMOKE_ROOT="$(mktemp -d)"
 TEMP_PATHS+=("$PYPI_SMOKE_ROOT")
-UV_NO_CONFIG=1 uv venv --python 3.13 "$PYPI_SMOKE_ROOT/venv"
+UV_NO_CONFIG=1 uv venv --python 3.14 "$PYPI_SMOKE_ROOT/venv"
 PYPI_SMOKE_PYTHON="$PYPI_SMOKE_ROOT/venv/bin/python"
 if [[ -f "$PYPI_SMOKE_ROOT/venv/Scripts/python.exe" ]]; then
     PYPI_SMOKE_PYTHON="$PYPI_SMOKE_ROOT/venv/Scripts/python.exe"

@@ -1,16 +1,12 @@
-FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim
+FROM python:3.14-slim-trixie AS base
 
-ENV UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+FROM base AS builder
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+ENV UV_LINK_MODE=copy
 
 WORKDIR /app/server
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        libgl1 \
-        libglib2.0-0 \
-        libxcb1 \
-    && rm -rf /var/lib/apt/lists/*
 
 COPY server/pyproject.toml ./
 ARG UV_INDEX_URL
@@ -22,11 +18,21 @@ COPY server/LICENSES ./LICENSES
 COPY server/babeldoc ./babeldoc
 COPY server/pdf2zh_next ./pdf2zh_next
 COPY server/rapidocr_onnxruntime ./rapidocr_onnxruntime
-COPY server/THIRD_PARTY_NOTICES.md ./
-COPY server/server.py server/task_manager.py server/pdf2zh_next_service.py ./
+COPY server/README.md server/THIRD_PARTY_NOTICES.md server/server.py server/task_manager.py server/pdf2zh_next_service.py ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev
 
+FROM base AS runtime
+
+ENV PATH="/app/server/.venv/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app/server
+
+# Preserve the editable install path and translates mount.
+COPY --from=builder /app/server /app/server
+
 EXPOSE 8890
 
-CMD ["uv", "run", "--no-sync", "zotero-pdf2zh-next", "--host", "0.0.0.0", "--port", "8890"]
+CMD ["zotero-pdf2zh-next", "--host", "0.0.0.0", "--port", "8890"]

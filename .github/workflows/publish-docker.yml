@@ -91,11 +91,11 @@ jobs:
                   VERSION: ${{ steps.metadata.outputs.version }}
               run: |
                   set -euo pipefail
-                  docker run --rm -i --entrypoint uv "$IMAGE:$VERSION" \
-                    run --no-sync python - "$VERSION" < scripts/check_installed_runtime.py
+                  docker run --rm -i --entrypoint python "$IMAGE:$VERSION" \
+                    - "$VERSION" < scripts/check_installed_runtime.py
                   docker run -d --name pdf2zh-smoke "$IMAGE:$VERSION"
                   trap 'docker logs pdf2zh-smoke; docker rm -f pdf2zh-smoke' EXIT
-                  docker exec -i pdf2zh-smoke uv run --no-sync python - "$VERSION" <<'PY'
+                  docker exec -i pdf2zh-smoke python - "$VERSION" <<'PY'
                   import json
                   import sys
                   import time
